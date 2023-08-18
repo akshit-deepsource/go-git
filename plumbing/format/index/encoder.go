@@ -2,13 +2,13 @@ package index
 
 import (
 	"bytes"
-	"errors"
 	"io"
 	"sort"
 	"time"
 
 	"github.com/go-git/go-git/v5/plumbing/hash"
 	"github.com/go-git/go-git/v5/utils/binary"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -38,7 +38,7 @@ func (e *Encoder) Encode(idx *Index) error {
 	// TODO: support v4
 	// TODO: support extensions
 	if idx.Version > EncodeVersionSupported {
-		return ErrUnsupportedVersion
+		return errors.WithStack(ErrUnsupportedVersion)
 	}
 
 	if err := e.encodeHeader(idx); err != nil {
@@ -141,7 +141,7 @@ func (e *Encoder) timeToUint32(t *time.Time) (uint32, uint32, error) {
 	}
 
 	if t.Unix() < 0 || t.UnixNano() < 0 {
-		return 0, 0, ErrInvalidTimestamp
+		return 0, 0, errors.WithStack(ErrInvalidTimestamp)
 	}
 
 	return uint32(t.Unix()), uint32(t.Nanosecond()), nil

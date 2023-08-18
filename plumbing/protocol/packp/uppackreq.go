@@ -8,6 +8,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/format/pktline"
 	"github.com/go-git/go-git/v5/plumbing/protocol/packp/capability"
+	"github.com/pkg/errors"
 )
 
 // UploadPackRequest represents a upload-pack request.
@@ -82,7 +83,7 @@ func (u *UploadHaves) Encode(w io.Writer, flush bool) error {
 		}
 
 		if err := e.Encodef("have %s\n", have); err != nil {
-			return fmt.Errorf("sending haves for %q: %s", have, err)
+			return errors.WithStack(fmt.Errorf("sending haves for %q: %s", have, err))
 		}
 
 		last = have
@@ -90,7 +91,7 @@ func (u *UploadHaves) Encode(w io.Writer, flush bool) error {
 
 	if flush && len(u.Haves) != 0 {
 		if err := e.Flush(); err != nil {
-			return fmt.Errorf("sending flush-pkt after haves: %s", err)
+			return errors.WithStack(fmt.Errorf("sending flush-pkt after haves: %s", err))
 		}
 	}
 

@@ -6,13 +6,14 @@ import (
 	"io"
 	"os"
 
-	billy "github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/cache"
 	"github.com/go-git/go-git/v5/plumbing/format/idxfile"
 	"github.com/go-git/go-git/v5/plumbing/storer"
 	"github.com/go-git/go-git/v5/utils/ioutil"
 	"github.com/go-git/go-git/v5/utils/sync"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -101,7 +102,7 @@ func (p *Packfile) GetByOffset(o int64) (plumbing.EncodedObject, error) {
 func (p *Packfile) GetSizeByOffset(o int64) (size int64, err error) {
 	if _, err := p.s.SeekFromStart(o); err != nil {
 		if err == io.EOF || isInvalid(err) {
-			return 0, plumbing.ErrObjectNotFound
+			return 0, errors.WithStack(plumbing.ErrObjectNotFound)
 		}
 
 		return 0, err
@@ -196,7 +197,7 @@ func (p *Packfile) objectAtOffset(offset int64, hash plumbing.Hash) (plumbing.En
 	h, err := p.objectHeaderAtOffset(offset)
 	if err != nil {
 		if err == io.EOF || isInvalid(err) {
-			return nil, plumbing.ErrObjectNotFound
+			return nil, errors.WithStack(plumbing.ErrObjectNotFound)
 		}
 		return nil, err
 	}
@@ -291,7 +292,7 @@ func asyncReader(p *Packfile) (io.ReadCloser, error) {
 	reader := ioutil.NewReaderUsingReaderAt(p.file, p.s.r.offset)
 	zr, err := sync.GetZlibReader(reader)
 	if err != nil {
-		return nil, fmt.Errorf("zlib reset error: %s", err)
+		return nil, errors.WithStack(fmt.Errorf("zlib reset error: %s", err))
 	}
 
 	return ioutil.NewReadCloserWithCloser(zr.Reader, func() error {
@@ -326,7 +327,7 @@ func (p *Packfile) getReaderDirect(h *ObjectHeader) (io.ReadCloser, error) {
 		}
 		return r, nil
 	default:
-		return nil, ErrInvalidObject.AddDetails("type %q", h.Type)
+		return nil, errors.WithStack(ErrInvalidObject.AddDetails("type %q", h.Type))
 	}
 }
 
@@ -504,7 +505,7 @@ func (p *Packfile) GetByType(typ plumbing.ObjectType) (storer.EncodedObjectIter,
 			typ:  typ,
 		}, nil
 	default:
-		return nil, plumbing.ErrInvalidType
+		return nil, errors.WithStack(plumbing.ErrInvalidType)
 	}
 }
 

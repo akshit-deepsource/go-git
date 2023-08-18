@@ -1,8 +1,9 @@
 package pktline
 
 import (
-	"errors"
 	"io"
+
+	"github.com/pkg/errors"
 )
 
 const (
@@ -80,8 +81,8 @@ func (s *Scanner) Bytes() []byte {
 // pkt-len and subtracting the pkt-len size.
 func (s *Scanner) readPayloadLen() (int, error) {
 	if _, err := io.ReadFull(s.r, s.len[:]); err != nil {
-		if err == io.ErrUnexpectedEOF {
-			return 0, ErrInvalidPktLen
+		if errors.Is(err, io.ErrUnexpectedEOF) {
+			return 0, errors.WithStack(ErrInvalidPktLen)
 		}
 
 		return 0, err
@@ -96,9 +97,9 @@ func (s *Scanner) readPayloadLen() (int, error) {
 	case n == 0:
 		return 0, nil
 	case n <= lenSize:
-		return 0, ErrInvalidPktLen
+		return 0, errors.WithStack(ErrInvalidPktLen)
 	case n > OversizePayloadMax+lenSize:
-		return 0, ErrInvalidPktLen
+		return 0, errors.WithStack(ErrInvalidPktLen)
 	default:
 		return n - lenSize, nil
 	}
@@ -113,7 +114,7 @@ func hexDecode(buf [lenSize]byte) (int, error) {
 	for i := 0; i < lenSize; i++ {
 		n, err := asciiHexToByte(buf[i])
 		if err != nil {
-			return 0, ErrInvalidPktLen
+			return 0, errors.WithStack(ErrInvalidPktLen)
 		}
 		ret = 16*ret + int(n)
 	}
@@ -129,6 +130,6 @@ func asciiHexToByte(b byte) (byte, error) {
 	case b >= 'a' && b <= 'f':
 		return b - 'a' + 10, nil
 	default:
-		return 0, ErrInvalidPktLen
+		return 0, errors.WithStack(ErrInvalidPktLen)
 	}
 }

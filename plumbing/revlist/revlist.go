@@ -10,6 +10,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/storer"
+	"github.com/pkg/errors"
 )
 
 // Objects applies a complementary set. It gets all the hashes from all
@@ -61,7 +62,7 @@ func objects(
 
 	for _, h := range objects {
 		if err := processObject(s, h, seen, visited, ignore, walkerFunc); err != nil {
-			if allowMissingObjects && err == plumbing.ErrObjectNotFound {
+			if allowMissingObjects && errors.Is(err, plumbing.ErrObjectNotFound) {
 				continue
 			}
 
@@ -106,8 +107,8 @@ func processObject(
 	case *object.Blob:
 		walkerFunc(do.Hash)
 	default:
-		return fmt.Errorf("object type not valid: %s. "+
-			"Object reference: %s", o.Type(), o.Hash())
+		return errors.WithStack(fmt.Errorf("object type not valid: %s. "+
+			"Object reference: %s", o.Type(), o.Hash()))
 	}
 
 	return nil

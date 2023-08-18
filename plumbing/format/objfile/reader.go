@@ -1,13 +1,13 @@
 package objfile
 
 import (
-	"errors"
 	"io"
 	"strconv"
 
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/format/packfile"
 	"github.com/go-git/go-git/v5/utils/sync"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -30,7 +30,7 @@ type Reader struct {
 func NewReader(r io.Reader) (*Reader, error) {
 	zlib, err := sync.GetZlibReader(r)
 	if err != nil {
-		return nil, packfile.ErrZLib.AddDetails(err.Error())
+		return nil, errors.WithStack(packfile.ErrZLib.AddDetails(err.Error()))
 	}
 
 	return &Reader{
@@ -75,7 +75,7 @@ func (r *Reader) readUntil(delim byte) ([]byte, error) {
 	for {
 		if n, err := r.zlib.Read(buf[:]); err != nil && (err != io.EOF || n == 0) {
 			if err == io.EOF {
-				return nil, ErrHeader
+				return nil, errors.WithStack(ErrHeader)
 			}
 			return nil, err
 		}

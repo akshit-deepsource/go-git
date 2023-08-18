@@ -3,12 +3,12 @@ package packp
 import (
 	"bytes"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"io"
 
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/format/pktline"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -24,16 +24,16 @@ var (
 )
 
 func errMalformedRequest(reason string) error {
-	return fmt.Errorf("malformed request: %s", reason)
+	return errors.WithStack(fmt.Errorf("malformed request: %s", reason))
 }
 
 func errInvalidHashSize(got int) error {
-	return fmt.Errorf("invalid hash size: expected %d, got %d",
-		hashSize, got)
+	return errors.WithStack(fmt.Errorf("invalid hash size: expected %d, got %d",
+		hashSize, got))
 }
 
 func errInvalidHash(err error) error {
-	return fmt.Errorf("invalid hash: %s", err.Error())
+	return errors.WithStack(fmt.Errorf("invalid hash: %s", err.Error()))
 }
 
 func errInvalidShallowLineLength(got int) error {

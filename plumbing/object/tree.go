@@ -2,7 +2,6 @@ package object
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"path"
@@ -14,6 +13,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/storer"
 	"github.com/go-git/go-git/v5/utils/ioutil"
 	"github.com/go-git/go-git/v5/utils/sync"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -73,13 +73,13 @@ type TreeEntry struct {
 func (t *Tree) File(path string) (*File, error) {
 	e, err := t.FindEntry(path)
 	if err != nil {
-		return nil, ErrFileNotFound
+		return nil, errors.WithStack(ErrFileNotFound)
 	}
 
 	blob, err := GetBlob(t.s, e.Hash)
 	if err != nil {
-		if err == plumbing.ErrObjectNotFound {
-			return nil, ErrFileNotFound
+		if errors.Is(err, plumbing.ErrObjectNotFound) {
+			return nil, errors.WithStack(ErrFileNotFound)
 		}
 		return nil, err
 	}
@@ -92,7 +92,7 @@ func (t *Tree) File(path string) (*File, error) {
 func (t *Tree) Size(path string) (int64, error) {
 	e, err := t.FindEntry(path)
 	if err != nil {
-		return 0, ErrEntryNotFound
+		return 0, errors.WithStack(ErrEntryNotFound)
 	}
 
 	return t.s.EncodedObjectSize(e.Hash)
@@ -103,12 +103,12 @@ func (t *Tree) Size(path string) (int64, error) {
 func (t *Tree) Tree(path string) (*Tree, error) {
 	e, err := t.FindEntry(path)
 	if err != nil {
-		return nil, ErrDirectoryNotFound
+		return nil, errors.WithStack(ErrDirectoryNotFound)
 	}
 
 	tree, err := GetTree(t.s, e.Hash)
-	if err == plumbing.ErrObjectNotFound {
-		return nil, ErrDirectoryNotFound
+	if errors.Is(err, plumbing.ErrObjectNotFound) {
+		return nil, errors.WithStack(ErrDirectoryNotFound)
 	}
 
 	return tree, err
@@ -165,7 +165,7 @@ func (t *Tree) FindEntry(path string) (*TreeEntry, error) {
 func (t *Tree) dir(baseName string) (*Tree, error) {
 	entry, err := t.entry(baseName)
 	if err != nil {
-		return nil, ErrDirectoryNotFound
+		return nil, errors.WithStack(ErrDirectoryNotFound)
 	}
 
 	obj, err := t.s.EncodedObject(plumbing.TreeObject, entry.Hash)
@@ -186,7 +186,7 @@ func (t *Tree) entry(baseName string) (*TreeEntry, error) {
 
 	entry, ok := t.m[baseName]
 	if !ok {
-		return nil, ErrEntryNotFound
+		return nil, errors.WithStack(ErrEntryNotFound)
 	}
 
 	return entry, nil
@@ -213,7 +213,7 @@ func (t *Tree) Type() plumbing.ObjectType {
 // Decode transform an plumbing.EncodedObject into a Tree struct
 func (t *Tree) Decode(o plumbing.EncodedObject) (err error) {
 	if o.Type() != plumbing.TreeObject {
-		return ErrUnsupportedObject
+		return errors.WithStack(ErrUnsupportedObject)
 	}
 
 	t.Hash = o.Hash()

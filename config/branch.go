@@ -1,11 +1,11 @@
 package config
 
 import (
-	"errors"
 	"strings"
 
 	"github.com/go-git/go-git/v5/plumbing"
 	format "github.com/go-git/go-git/v5/plumbing/format/config"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -40,18 +40,18 @@ type Branch struct {
 // Validate validates fields of branch
 func (b *Branch) Validate() error {
 	if b.Name == "" {
-		return errBranchEmptyName
+		return errors.WithStack(errBranchEmptyName)
 	}
 
 	if b.Merge != "" && !b.Merge.IsBranch() {
-		return errBranchInvalidMerge
+		return errors.WithStack(errBranchInvalidMerge)
 	}
 
 	if b.Rebase != "" &&
 		b.Rebase != "true" &&
 		b.Rebase != "interactive" &&
 		b.Rebase != "false" {
-		return errBranchInvalidRebase
+		return errors.WithStack(errBranchInvalidRebase)
 	}
 
 	return nil

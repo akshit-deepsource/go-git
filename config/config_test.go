@@ -8,6 +8,7 @@ import (
 	"github.com/go-git/go-billy/v5/osfs"
 	"github.com/go-git/go-billy/v5/util"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/pkg/errors"
 	. "gopkg.in/check.v1"
 )
 
@@ -269,7 +270,7 @@ func (s *ConfigSuite) TestValidateInvalidRemote(c *C) {
 		},
 	}
 
-	c.Assert(config.Validate(), Equals, ErrRemoteConfigEmptyURL)
+	c.Assert(errors.Is(config.Validate(), ErrRemoteConfigEmptyURL), Equals, true)
 }
 
 func (s *ConfigSuite) TestValidateInvalidRemoteKey(c *C) {
@@ -279,17 +280,17 @@ func (s *ConfigSuite) TestValidateInvalidRemoteKey(c *C) {
 		},
 	}
 
-	c.Assert(config.Validate(), Equals, ErrInvalid)
+	c.Assert(errors.Is(config.Validate(), ErrInvalid), Equals, true)
 }
 
 func (s *ConfigSuite) TestRemoteConfigValidateMissingURL(c *C) {
 	config := &RemoteConfig{Name: "foo"}
-	c.Assert(config.Validate(), Equals, ErrRemoteConfigEmptyURL)
+	c.Assert(errors.Is(config.Validate(), ErrRemoteConfigEmptyURL), Equals, true)
 }
 
 func (s *ConfigSuite) TestRemoteConfigValidateMissingName(c *C) {
 	config := &RemoteConfig{}
-	c.Assert(config.Validate(), Equals, ErrRemoteConfigEmptyName)
+	c.Assert(errors.Is(config.Validate(), ErrRemoteConfigEmptyName), Equals, true)
 }
 
 func (s *ConfigSuite) TestRemoteConfigValidateDefault(c *C) {
@@ -312,7 +313,7 @@ func (s *ConfigSuite) TestValidateInvalidBranchKey(c *C) {
 		},
 	}
 
-	c.Assert(config.Validate(), Equals, ErrInvalid)
+	c.Assert(errors.Is(config.Validate(), ErrInvalid), Equals, true)
 }
 
 func (s *ConfigSuite) TestValidateInvalidBranch(c *C) {
@@ -331,7 +332,7 @@ func (s *ConfigSuite) TestValidateInvalidBranch(c *C) {
 		},
 	}
 
-	c.Assert(config.Validate(), Equals, errBranchInvalidMerge)
+	c.Assert(errors.Is(config.Validate(), errBranchInvalidMerge), Equals, true)
 }
 
 func (s *ConfigSuite) TestRemoteConfigDefaultValues(c *C) {

@@ -3,7 +3,6 @@ package git
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"path"
 
@@ -12,6 +11,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/format/index"
 	"github.com/go-git/go-git/v5/plumbing/transport"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -44,7 +44,7 @@ func (s *Submodule) Init() error {
 
 	_, ok := cfg.Submodules[s.c.Name]
 	if ok {
-		return ErrSubmoduleAlreadyInitialized
+		return errors.WithStack(ErrSubmoduleAlreadyInitialized)
 	}
 
 	s.initialized = true
@@ -69,7 +69,7 @@ func (s *Submodule) status(idx *index.Index) (*SubmoduleStatus, error) {
 	}
 
 	e, err := idx.Entry(s.c.Path)
-	if err != nil && err != index.ErrEntryNotFound {
+	if err != nil && !errors.Is(err, index.ErrEntryNotFound) {
 		return nil, err
 	}
 
@@ -91,7 +91,7 @@ func (s *Submodule) status(idx *index.Index) (*SubmoduleStatus, error) {
 		status.Current = head.Hash()
 	}
 
-	if err != nil && err == plumbing.ErrReferenceNotFound {
+	if err != nil && errors.Is(err, plumbing.ErrReferenceNotFound) {
 		err = nil
 	}
 
@@ -101,7 +101,7 @@ func (s *Submodule) status(idx *index.Index) (*SubmoduleStatus, error) {
 // Repository returns the Repository represented by this submodule
 func (s *Submodule) Repository() (*Repository, error) {
 	if !s.initialized {
-		return nil, ErrSubmoduleNotInitialized
+		return nil, errors.WithStack(ErrSubmoduleNotInitialized)
 	}
 
 	storer, err := s.w.r.Storer.Module(s.c.Name)
@@ -110,7 +110,7 @@ func (s *Submodule) Repository() (*Repository, error) {
 	}
 
 	_, err = storer.Reference(plumbing.HEAD)
-	if err != nil && err != plumbing.ErrReferenceNotFound {
+	if err != nil && !errors.Is(err, plumbing.ErrReferenceNotFound) {
 		return nil, err
 	}
 
@@ -181,7 +181,7 @@ func (s *Submodule) UpdateContext(ctx context.Context, o *SubmoduleUpdateOptions
 
 func (s *Submodule) update(ctx context.Context, o *SubmoduleUpdateOptions, forceHash plumbing.Hash) error {
 	if !s.initialized && !o.Init {
-		return ErrSubmoduleNotInitialized
+		return errors.WithStack(ErrSubmoduleNotInitialized)
 	}
 
 	if !s.initialized && o.Init {
@@ -244,7 +244,7 @@ func (s *Submodule) fetchAndCheckout(
 ) error {
 	if !o.NoFetch {
 		err := r.FetchContext(ctx, &FetchOptions{Auth: o.Auth, Depth: o.Depth})
-		if err != nil && err != NoErrAlreadyUpToDate {
+		if err != nil && !errors.Is(err, NoErrAlreadyUpToDate) {
 			return err
 		}
 	}
@@ -267,7 +267,7 @@ func (s *Submodule) fetchAndCheckout(
 				RefSpecs: []config.RefSpec{refSpec},
 				Depth:    o.Depth,
 			})
-			if err != nil && err != NoErrAlreadyUpToDate && err != ErrExactSHA1NotSupported {
+			if err != nil && !errors.Is(err, NoErrAlreadyUpToDate) && !errors.Is(err, ErrExactSHA1NotSupported) {
 				return err
 			}
 		}

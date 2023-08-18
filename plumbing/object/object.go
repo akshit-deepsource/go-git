@@ -4,7 +4,6 @@ package object
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"strconv"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/storer"
+	"github.com/pkg/errors"
 )
 
 // ErrUnsupportedObject trigger when a non-supported object is being decoded.
@@ -24,18 +24,18 @@ var ErrUnsupportedObject = errors.New("unsupported object type")
 // Object is returned when an object can be of any type. It is frequently used
 // with a type cast to acquire the specific type of object:
 //
-//   func process(obj Object) {
-//   	switch o := obj.(type) {
-//   	case *Commit:
-//   		// o is a Commit
-//   	case *Tree:
-//   		// o is a Tree
-//   	case *Blob:
-//   		// o is a Blob
-//   	case *Tag:
-//   		// o is a Tag
-//   	}
-//   }
+//	func process(obj Object) {
+//		switch o := obj.(type) {
+//		case *Commit:
+//			// o is a Commit
+//		case *Tree:
+//			// o is a Tree
+//		case *Blob:
+//			// o is a Blob
+//		case *Tag:
+//			// o is a Tag
+//		}
+//	}
 //
 // This interface is intentionally different from plumbing.EncodedObject, which
 // is a lower level interface used by storage implementations to read and write
@@ -70,7 +70,7 @@ func DecodeObject(s storer.EncodedObjectStorer, o plumbing.EncodedObject) (Objec
 	case plumbing.TagObject:
 		return DecodeTag(s, o)
 	default:
-		return nil, plumbing.ErrInvalidType
+		return nil, errors.WithStack(plumbing.ErrInvalidType)
 	}
 }
 
@@ -189,7 +189,7 @@ func (iter *ObjectIter) Next() (Object, error) {
 		}
 
 		o, err := iter.toObject(obj)
-		if err == plumbing.ErrInvalidType {
+		if errors.Is(err, plumbing.ErrInvalidType) {
 			continue
 		}
 
@@ -207,7 +207,7 @@ func (iter *ObjectIter) Next() (Object, error) {
 func (iter *ObjectIter) ForEach(cb func(Object) error) error {
 	return iter.EncodedObjectIter.ForEach(func(obj plumbing.EncodedObject) error {
 		o, err := iter.toObject(obj)
-		if err == plumbing.ErrInvalidType {
+		if errors.Is(err, plumbing.ErrInvalidType) {
 			return nil
 		}
 
@@ -234,6 +234,6 @@ func (iter *ObjectIter) toObject(obj plumbing.EncodedObject) (Object, error) {
 		tag := &Tag{}
 		return tag, tag.Decode(obj)
 	default:
-		return nil, plumbing.ErrInvalidType
+		return nil, errors.WithStack(plumbing.ErrInvalidType)
 	}
 }

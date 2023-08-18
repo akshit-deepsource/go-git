@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/utils/binary"
+	"github.com/pkg/errors"
 )
 
 // objects implements sort.Interface and uses hash as sorting key.
@@ -92,7 +93,7 @@ func (w *Writer) OnFooter(h plumbing.Hash) error {
 // the observer callbacks.
 func (w *Writer) createIndex() (*MemoryIndex, error) {
 	if !w.finished {
-		return nil, fmt.Errorf("the index still hasn't finished building")
+		return nil, errors.WithStack(fmt.Errorf("the index still hasn't finished building"))
 	}
 
 	idx := new(MemoryIndex)

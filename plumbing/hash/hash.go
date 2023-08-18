@@ -8,6 +8,7 @@ import (
 	"hash"
 
 	"github.com/pjbgf/sha1cd"
+	"github.com/pkg/errors"
 )
 
 // algos is a map of hash algorithms.
@@ -29,7 +30,7 @@ func reset() {
 // overriding the default value.
 func RegisterHash(h crypto.Hash, f func() hash.Hash) error {
 	if f == nil {
-		return fmt.Errorf("cannot register hash: f is nil")
+		return errors.WithStack(fmt.Errorf("cannot register hash: f is nil"))
 	}
 
 	switch h {
@@ -38,7 +39,7 @@ func RegisterHash(h crypto.Hash, f func() hash.Hash) error {
 	case crypto.SHA256:
 		algos[h] = f
 	default:
-		return fmt.Errorf("unsupported hash function: %v", h)
+		return errors.WithStack(fmt.Errorf("unsupported hash function: %v", h))
 	}
 	return nil
 }

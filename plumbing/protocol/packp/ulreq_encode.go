@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/format/pktline"
+	"github.com/pkg/errors"
 )
 
 // Encode writes the UlReq encoding of u to the stream.
@@ -36,7 +37,7 @@ func (e *ulReqEncoder) Encode(v *UploadRequest) error {
 	e.data = v
 
 	if len(v.Wants) == 0 {
-		return fmt.Errorf("empty wants provided")
+		return errors.WithStack(fmt.Errorf("empty wants provided"))
 	}
 
 	plumbing.HashesSort(e.data.Wants)

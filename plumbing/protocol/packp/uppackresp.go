@@ -1,13 +1,13 @@
 package packp
 
 import (
-	"errors"
 	"io"
 
 	"bufio"
 
 	"github.com/go-git/go-git/v5/plumbing/protocol/packp/capability"
 	"github.com/go-git/go-git/v5/utils/ioutil"
+	"github.com/pkg/errors"
 )
 
 // ErrUploadPackResponseNotDecoded is returned if Read is called without
@@ -92,7 +92,7 @@ func (r *UploadPackResponse) Encode(w io.Writer) (err error) {
 // called before the ErrUploadPackResponseNotDecoded will be return
 func (r *UploadPackResponse) Read(p []byte) (int, error) {
 	if r.r == nil {
-		return 0, ErrUploadPackResponseNotDecoded
+		return 0, errors.WithStack(ErrUploadPackResponseNotDecoded)
 	}
 
 	return r.r.Read(p)

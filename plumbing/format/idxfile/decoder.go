@@ -3,11 +3,11 @@ package idxfile
 import (
 	"bufio"
 	"bytes"
-	"errors"
 	"io"
 
 	"github.com/go-git/go-git/v5/plumbing/hash"
 	"github.com/go-git/go-git/v5/utils/binary"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -64,7 +64,7 @@ func validateHeader(r io.Reader) error {
 	}
 
 	if !bytes.Equal(h, idxHeader) {
-		return ErrMalformedIdxFile
+		return errors.WithStack(ErrMalformedIdxFile)
 	}
 
 	return nil
@@ -77,7 +77,7 @@ func readVersion(idx *MemoryIndex, r io.Reader) error {
 	}
 
 	if v > VersionSupported {
-		return ErrUnsupportedVersion
+		return errors.WithStack(ErrUnsupportedVersion)
 	}
 
 	idx.Version = v

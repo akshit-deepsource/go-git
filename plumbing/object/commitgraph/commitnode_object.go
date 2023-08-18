@@ -7,6 +7,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/storer"
+	"github.com/pkg/errors"
 )
 
 // objectCommitNode is a representation of Commit as presented in the GIT object format.
@@ -65,7 +66,7 @@ func (c *objectCommitNode) ParentNodes() CommitNodeIter {
 
 func (c *objectCommitNode) ParentNode(i int) (CommitNode, error) {
 	if i < 0 || i >= len(c.commit.ParentHashes) {
-		return nil, object.ErrParentNotFound
+		return nil, errors.WithStack(object.ErrParentNotFound)
 	}
 
 	// Note: It's necessary to go through CommitNodeIndex here to ensure

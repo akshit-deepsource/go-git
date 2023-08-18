@@ -2,7 +2,6 @@ package packfile
 
 import (
 	"bytes"
-	"errors"
 	"io"
 
 	"github.com/go-git/go-git/v5/plumbing"
@@ -10,6 +9,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/storer"
 	"github.com/go-git/go-git/v5/utils/ioutil"
 	"github.com/go-git/go-git/v5/utils/sync"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -69,7 +69,7 @@ func NewParserWithStorage(
 	ob ...Observer,
 ) (*Parser, error) {
 	if !scanner.IsSeekable && storage == nil {
-		return nil, ErrNotSeekableSource
+		return nil, errors.WithStack(ErrNotSeekableSource)
 	}
 
 	var deltas map[int64][]byte
@@ -194,7 +194,7 @@ func (p *Parser) indexObjects() error {
 
 			parent, ok := p.oiByOffset[oh.OffsetReference]
 			if !ok {
-				return plumbing.ErrObjectNotFound
+				return errors.WithStack(plumbing.ErrObjectNotFound)
 			}
 
 			ota = newDeltaObject(oh.Offset, oh.Length, t, parent)
@@ -205,7 +205,7 @@ func (p *Parser) indexObjects() error {
 			if !ok {
 				// can't find referenced object in this pack file
 				// this must be a "thin" pack.
-				parent = &objectInfo{ //Placeholder parent
+				parent = &objectInfo{ // Placeholder parent
 					SHA1:        oh.Reference,
 					ExternalRef: true, // mark as an external reference that must be resolved
 					Type:        plumbing.AnyObject,
@@ -355,7 +355,7 @@ func (p *Parser) get(o *objectInfo, buf *bytes.Buffer) (err error) {
 
 	if o.ExternalRef {
 		// we were not able to resolve a ref in a thin pack
-		return ErrReferenceDeltaNotFound
+		return errors.WithStack(ErrReferenceDeltaNotFound)
 	}
 
 	if o.DiskType.IsDelta() {
@@ -427,7 +427,7 @@ func (p *Parser) readData(w io.Writer, o *objectInfo) error {
 	if !p.scanner.IsSeekable && o.DiskType.IsDelta() {
 		data, ok := p.deltas[o.Offset]
 		if !ok {
-			return ErrDeltaNotCached
+			return errors.WithStack(ErrDeltaNotCached)
 		}
 		_, err := w.Write(data)
 		return err

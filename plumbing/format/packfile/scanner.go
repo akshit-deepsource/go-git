@@ -12,6 +12,7 @@ import (
 	"github.com/go-git/go-git/v5/utils/binary"
 	"github.com/go-git/go-git/v5/utils/ioutil"
 	"github.com/go-git/go-git/v5/utils/sync"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -324,7 +325,7 @@ func (s *Scanner) ReadObject() (io.ReadCloser, error) {
 	zr, err := sync.GetZlibReader(s.r)
 
 	if err != nil {
-		return nil, fmt.Errorf("zlib reset error: %s", err)
+		return nil, errors.WithStack(fmt.Errorf("zlib reset error: %s", err))
 	}
 
 	return ioutil.NewReadCloserWithCloser(zr.Reader, func() error {
@@ -340,7 +341,7 @@ func (s *Scanner) copyObject(w io.Writer) (n int64, err error) {
 	defer sync.PutZlibReader(zr)
 
 	if err != nil {
-		return 0, fmt.Errorf("zlib reset error: %s", err)
+		return 0, errors.WithStack(fmt.Errorf("zlib reset error: %s", err))
 	}
 
 	defer ioutil.CheckClose(zr.Reader, &err)
@@ -459,7 +460,7 @@ func (r *scannerReader) Seek(offset int64, whence int) (int64, error) {
 
 	if seeker, ok := r.reader.(io.ReadSeeker); !ok {
 		if whence != io.SeekCurrent || offset != 0 {
-			return -1, ErrSeekNotSupported
+			return -1, errors.WithStack(ErrSeekNotSupported)
 		}
 	} else {
 		if whence == io.SeekCurrent && offset == 0 {

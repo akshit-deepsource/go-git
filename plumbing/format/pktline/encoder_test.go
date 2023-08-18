@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/go-git/go-git/v5/plumbing/format/pktline"
+	"github.com/pkg/errors"
 
 	. "gopkg.in/check.v1"
 )
@@ -108,7 +109,7 @@ func (s *SuiteEncoder) TestEncodeErrPayloadTooLong(c *C) {
 		e := pktline.NewEncoder(&buf)
 
 		err := e.Encode(input...)
-		c.Assert(err, Equals, pktline.ErrPayloadTooLong, comment)
+		c.Assert(errors.Is(err, pktline.ErrPayloadTooLong), Equals, true, comment)
 	}
 }
 
@@ -192,7 +193,7 @@ func (s *SuiteEncoder) TestEncodeStringErrPayloadTooLong(c *C) {
 		e := pktline.NewEncoder(&buf)
 
 		err := e.EncodeString(input...)
-		c.Assert(err, Equals, pktline.ErrPayloadTooLong, comment)
+		c.Assert(errors.Is(err, pktline.ErrPayloadTooLong), Equals, true, comment)
 	}
 }
 

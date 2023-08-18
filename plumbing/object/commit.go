@@ -3,12 +3,12 @@ package object
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"strings"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
+	"github.com/pkg/errors"
 
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/storer"
@@ -169,7 +169,7 @@ func (c *Commit) Type() plumbing.ObjectType {
 // Decode transforms a plumbing.EncodedObject into a Commit struct.
 func (c *Commit) Decode(o plumbing.EncodedObject) (err error) {
 	if o.Type() != plumbing.CommitObject {
-		return ErrUnsupportedObject
+		return errors.WithStack(ErrUnsupportedObject)
 	}
 
 	c.Hash = o.Hash()

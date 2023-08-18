@@ -1,9 +1,10 @@
 package gitattributes
 
 import (
-	"errors"
 	"io"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 const (
@@ -154,7 +155,7 @@ func ParseAttributesLine(line string, domain []string, allowMacro bool) (m Match
 		}
 
 		if !validAttributeName(attr.name) {
-			return m, ErrInvalidAttributeName
+			return m, errors.WithStack(ErrInvalidAttributeName)
 		}
 		m.Attributes = append(m.Attributes, attr)
 	}
@@ -170,12 +171,12 @@ func checkMacro(name string, allowMacro bool) (macro bool, macroName string, err
 		return false, name, nil
 	}
 	if !allowMacro {
-		return true, name, ErrMacroNotAllowed
+		return true, name, errors.WithStack(ErrMacroNotAllowed)
 	}
 
 	macroName = name[len(macroPrefix):]
 	if !validAttributeName(macroName) {
-		return true, name, ErrInvalidAttributeName
+		return true, name, errors.WithStack(ErrInvalidAttributeName)
 	}
 	return true, macroName, nil
 }

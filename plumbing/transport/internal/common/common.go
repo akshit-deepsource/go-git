@@ -193,7 +193,7 @@ func (s *session) AdvertisedReferencesContext(ctx context.Context) (*packp.AdvRe
 func (s *session) handleAdvRefDecodeError(err error) error {
 	// If repository is not found, we get empty stdout and server writes an
 	// error to stderr.
-	if err == packp.ErrEmptyInput {
+	if errors.Is(err, packp.ErrEmptyInput) {
 		s.finished = true
 		if err := s.checkNotFoundError(); err != nil {
 			return err
@@ -204,7 +204,7 @@ func (s *session) handleAdvRefDecodeError(err error) error {
 
 	// For empty (but existing) repositories, we get empty advertised-references
 	// message. But valid. That is, it includes at least a flush.
-	if err == packp.ErrEmptyAdvRefs {
+	if errors.Is(err, packp.ErrEmptyAdvRefs) {
 		// Empty repositories are valid for git-receive-pack.
 		if s.isReceivePack {
 			return nil
@@ -254,7 +254,7 @@ func (s *session) UploadPack(ctx context.Context, req *packp.UploadPackRequest) 
 	}
 
 	r, err := ioutil.NonEmptyReader(out)
-	if err == ioutil.ErrEmptyReader {
+	if errors.Is(err, ioutil.ErrEmptyReader) {
 		if c, ok := s.Stdout.(io.Closer); ok {
 			_ = c.Close()
 		}

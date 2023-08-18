@@ -9,6 +9,8 @@ import (
 	"regexp"
 	"strconv"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // ErrInvalidRevision is emitted if string doesn't match valid revision
@@ -188,60 +190,60 @@ func (p *Parser) validateFullRevision(chunks *[]Revisioner) error {
 			if i == 0 {
 				hasReference = true
 			} else {
-				return &ErrInvalidRevision{`reference must be defined once at the beginning`}
+				return errors.WithStack(&ErrInvalidRevision{`reference must be defined once at the beginning`})
 			}
 		case AtDate:
 			if len(*chunks) == 1 || hasReference && len(*chunks) == 2 {
 				return nil
 			}
 
-			return &ErrInvalidRevision{`"@" statement is not valid, could be : <refname>@{<ISO-8601 date>}, @{<ISO-8601 date>}`}
+			return errors.WithStack(&ErrInvalidRevision{`"@" statement is not valid, could be : <refname>@{<ISO-8601 date>}, @{<ISO-8601 date>}`})
 		case AtReflog:
 			if len(*chunks) == 1 || hasReference && len(*chunks) == 2 {
 				return nil
 			}
 
-			return &ErrInvalidRevision{`"@" statement is not valid, could be : <refname>@{<n>}, @{<n>}`}
+			return errors.WithStack(&ErrInvalidRevision{`"@" statement is not valid, could be : <refname>@{<n>}, @{<n>}`})
 		case AtCheckout:
 			if len(*chunks) == 1 {
 				return nil
 			}
 
-			return &ErrInvalidRevision{`"@" statement is not valid, could be : @{-<n>}`}
+			return errors.WithStack(&ErrInvalidRevision{`"@" statement is not valid, could be : @{-<n>}`})
 		case AtUpstream:
 			if len(*chunks) == 1 || hasReference && len(*chunks) == 2 {
 				return nil
 			}
 
-			return &ErrInvalidRevision{`"@" statement is not valid, could be : <refname>@{upstream}, @{upstream}, <refname>@{u}, @{u}`}
+			return errors.WithStack(&ErrInvalidRevision{`"@" statement is not valid, could be : <refname>@{upstream}, @{upstream}, <refname>@{u}, @{u}`})
 		case AtPush:
 			if len(*chunks) == 1 || hasReference && len(*chunks) == 2 {
 				return nil
 			}
 
-			return &ErrInvalidRevision{`"@" statement is not valid, could be : <refname>@{push}, @{push}`}
+			return errors.WithStack(&ErrInvalidRevision{`"@" statement is not valid, could be : <refname>@{push}, @{push}`})
 		case TildePath, CaretPath, CaretReg:
 			if !hasReference {
-				return &ErrInvalidRevision{`"~" or "^" statement must have a reference defined at the beginning`}
+				return errors.WithStack(&ErrInvalidRevision{`"~" or "^" statement must have a reference defined at the beginning`})
 			}
 		case ColonReg:
 			if len(*chunks) == 1 {
 				return nil
 			}
 
-			return &ErrInvalidRevision{`":" statement is not valid, could be : :/<regexp>`}
+			return errors.WithStack(&ErrInvalidRevision{`":" statement is not valid, could be : :/<regexp>`})
 		case ColonPath:
 			if i == len(*chunks)-1 && hasReference || len(*chunks) == 1 {
 				return nil
 			}
 
-			return &ErrInvalidRevision{`":" statement is not valid, could be : <revision>:<path>`}
+			return errors.WithStack(&ErrInvalidRevision{`":" statement is not valid, could be : <revision>:<path>`})
 		case ColonStagePath:
 			if len(*chunks) == 1 {
 				return nil
 			}
 
-			return &ErrInvalidRevision{`":" statement is not valid, could be : :<n>:<path>`}
+			return errors.WithStack(&ErrInvalidRevision{`":" statement is not valid, could be : :<n>:<path>`})
 		}
 	}
 
@@ -297,7 +299,7 @@ func (p *Parser) parseAt() (Revisioner, error) {
 		}
 
 		if t != cbrace {
-			return nil, &ErrInvalidRevision{s: `missing "}" in @{-n} structure`}
+			return nil, errors.WithStack(&ErrInvalidRevision{s: `missing "}" in @{-n} structure`})
 		}
 
 		return AtCheckout{n}, nil
@@ -318,12 +320,12 @@ func (p *Parser) parseAt() (Revisioner, error) {
 				t, err := time.Parse("2006-01-02T15:04:05Z", date)
 
 				if err != nil {
-					return nil, &ErrInvalidRevision{fmt.Sprintf(`wrong date "%s" must fit ISO-8601 format : 2006-01-02T15:04:05Z`, date)}
+					return nil, errors.WithStack(&ErrInvalidRevision{fmt.Sprintf(`wrong date "%s" must fit ISO-8601 format : 2006-01-02T15:04:05Z`, date)})
 				}
 
 				return AtDate{t}, nil
 			case tok == eof:
-				return nil, &ErrInvalidRevision{s: `missing "}" in @{<data>} structure`}
+				return nil, errors.WithStack(&ErrInvalidRevision{s: `missing "}" in @{<data>} structure`})
 			default:
 				date += lit
 			}
@@ -379,7 +381,7 @@ func (p *Parser) parseCaret() (Revisioner, error) {
 		n, _ := strconv.Atoi(lit)
 
 		if n > 2 {
-			return nil, &ErrInvalidRevision{fmt.Sprintf(`"%s" found must be 0, 1 or 2 after "^"`, lit)}
+			return nil, errors.WithStack(&ErrInvalidRevision{fmt.Sprintf(`"%s" found must be 0, 1 or 2 after "^"`, lit)})
 		}
 
 		return CaretPath{n}, nil
@@ -421,13 +423,13 @@ func (p *Parser) parseCaretBraces() (Revisioner, error) {
 		case re == "" && tok == emark && nextTok == minus:
 			negate = true
 		case re == "" && tok == emark:
-			return nil, &ErrInvalidRevision{s: `revision suffix brace component sequences starting with "/!" others than those defined are reserved`}
+			return nil, errors.WithStack(&ErrInvalidRevision{s: `revision suffix brace component sequences starting with "/!" others than those defined are reserved`})
 		case re == "" && tok == slash:
 			p.unscan()
 		case tok != slash && start:
-			return nil, &ErrInvalidRevision{fmt.Sprintf(`"%s" is not a valid revision suffix brace component`, lit)}
+			return nil, errors.WithStack(&ErrInvalidRevision{fmt.Sprintf(`"%s" is not a valid revision suffix brace component`, lit)})
 		case tok == eof:
-			return nil, &ErrInvalidRevision{s: `missing "}" in ^{<data>} structure`}
+			return nil, errors.WithStack(&ErrInvalidRevision{s: `missing "}" in ^{<data>} structure`})
 		case tok != cbrace:
 			p.unscan()
 			re += lit
@@ -437,7 +439,7 @@ func (p *Parser) parseCaretBraces() (Revisioner, error) {
 			reg, err := regexp.Compile(re)
 
 			if err != nil {
-				return CaretReg{}, &ErrInvalidRevision{fmt.Sprintf(`revision suffix brace component, %s`, err.Error())}
+				return CaretReg{}, errors.WithStack(&ErrInvalidRevision{fmt.Sprintf(`revision suffix brace component, %s`, err.Error())})
 			}
 
 			return CaretReg{reg, negate}, nil
@@ -494,13 +496,13 @@ func (p *Parser) parseColonSlash() (Revisioner, error) {
 		case re == "" && tok == emark && nextTok == minus:
 			negate = true
 		case re == "" && tok == emark:
-			return nil, &ErrInvalidRevision{s: `revision suffix brace component sequences starting with "/!" others than those defined are reserved`}
+			return nil, errors.WithStack(&ErrInvalidRevision{s: `revision suffix brace component sequences starting with "/!" others than those defined are reserved`})
 		case tok == eof:
 			p.unscan()
 			reg, err := regexp.Compile(re)
 
 			if err != nil {
-				return ColonReg{}, &ErrInvalidRevision{fmt.Sprintf(`revision suffix brace component, %s`, err.Error())}
+				return ColonReg{}, errors.WithStack(&ErrInvalidRevision{fmt.Sprintf(`revision suffix brace component, %s`, err.Error())})
 			}
 
 			return ColonReg{reg, negate}, nil
@@ -602,24 +604,24 @@ func (p *Parser) parseRef() (Revisioner, error) {
 func (p *Parser) checkRefFormat(token token, literal string, previousToken token, buffer string, endOfRef bool) error {
 	switch token {
 	case aslash, space, control, qmark, asterisk, obracket:
-		return &ErrInvalidRevision{fmt.Sprintf(`must not contains "%s"`, literal)}
+		return errors.WithStack(&ErrInvalidRevision{fmt.Sprintf(`must not contains "%s"`, literal)})
 	}
 
 	switch {
 	case (token == dot || token == slash) && buffer == "":
-		return &ErrInvalidRevision{fmt.Sprintf(`must not start with "%s"`, literal)}
+		return errors.WithStack(&ErrInvalidRevision{fmt.Sprintf(`must not start with "%s"`, literal)})
 	case previousToken == slash && endOfRef:
-		return &ErrInvalidRevision{`must not end with "/"`}
+		return errors.WithStack(&ErrInvalidRevision{`must not end with "/"`})
 	case previousToken == dot && endOfRef:
-		return &ErrInvalidRevision{`must not end with "."`}
+		return errors.WithStack(&ErrInvalidRevision{`must not end with "."`})
 	case token == dot && previousToken == slash:
-		return &ErrInvalidRevision{`must not contains "/."`}
+		return errors.WithStack(&ErrInvalidRevision{`must not contains "/."`})
 	case previousToken == dot && token == dot:
-		return &ErrInvalidRevision{`must not contains ".."`}
+		return errors.WithStack(&ErrInvalidRevision{`must not contains ".."`})
 	case previousToken == slash && token == slash:
-		return &ErrInvalidRevision{`must not contains consecutively "/"`}
+		return errors.WithStack(&ErrInvalidRevision{`must not contains consecutively "/"`})
 	case (token == slash || endOfRef) && len(buffer) > 4 && buffer[len(buffer)-5:] == ".lock":
-		return &ErrInvalidRevision{"cannot end with .lock"}
+		return errors.WithStack(&ErrInvalidRevision{"cannot end with .lock"})
 	}
 
 	return nil

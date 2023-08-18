@@ -4,7 +4,6 @@ package dotgit
 import (
 	"bufio"
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -18,6 +17,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/hash"
 	"github.com/go-git/go-git/v5/storage"
 	"github.com/go-git/go-git/v5/utils/ioutil"
+	"github.com/pkg/errors"
 
 	"github.com/go-git/go-billy/v5"
 )
@@ -241,7 +241,7 @@ func (d *DotGit) objectPacks() ([]plumbing.Hash, error) {
 			continue
 		}
 
-		h := plumbing.NewHash(n[5 : len(n)-5]) //pack-(hash).pack
+		h := plumbing.NewHash(n[5 : len(n)-5]) // pack-(hash).pack
 		if h.IsZero() {
 			// Ignore files with badly-formatted names.
 			continue
@@ -277,7 +277,7 @@ func (d *DotGit) objectPackOpen(hash plumbing.Hash, extension string) (billy.Fil
 	pack, err := d.fs.Open(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, ErrPackfileNotFound
+			return nil, errors.WithStack(ErrPackfileNotFound)
 		}
 
 		return nil, err
@@ -501,7 +501,7 @@ func (d *DotGit) hasObject(h plumbing.Hash) error {
 
 	_, ok := d.objectMap[h]
 	if !ok {
-		return plumbing.ErrObjectNotFound
+		return errors.WithStack(plumbing.ErrObjectNotFound)
 	}
 
 	return nil
@@ -545,7 +545,7 @@ func (d *DotGit) hasPack(h plumbing.Hash) error {
 
 	_, ok := d.packMap[h]
 	if !ok {
-		return ErrPackfileNotFound
+		return errors.WithStack(ErrPackfileNotFound)
 	}
 
 	return nil

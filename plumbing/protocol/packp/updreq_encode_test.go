@@ -2,6 +2,7 @@ package packp
 
 import (
 	"bytes"
+	"errors"
 	"io"
 
 	"github.com/go-git/go-git/v5/plumbing"
@@ -29,10 +30,10 @@ func (s *UpdReqEncodeSuite) testEncode(c *C, input *ReferenceUpdateRequest,
 func (s *UpdReqEncodeSuite) TestZeroValue(c *C) {
 	r := &ReferenceUpdateRequest{}
 	var buf bytes.Buffer
-	c.Assert(r.Encode(&buf), Equals, ErrEmptyCommands)
+	c.Assert(errors.Is(r.Encode(&buf), ErrEmptyCommands), Equals, true)
 
 	r = NewReferenceUpdateRequest()
-	c.Assert(r.Encode(&buf), Equals, ErrEmptyCommands)
+	c.Assert(errors.Is(r.Encode(&buf), ErrEmptyCommands), Equals, true)
 }
 
 func (s *UpdReqEncodeSuite) TestOneUpdateCommand(c *C) {

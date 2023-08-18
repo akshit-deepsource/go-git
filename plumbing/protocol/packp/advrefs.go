@@ -9,6 +9,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/protocol/packp/capability"
 	"github.com/go-git/go-git/v5/plumbing/storer"
 	"github.com/go-git/go-git/v5/storage/memory"
+	"github.com/pkg/errors"
 )
 
 // AdvRefs values represent the information transmitted on an
@@ -61,7 +62,7 @@ func (a *AdvRefs) AddReference(r *plumbing.Reference) error {
 	case plumbing.HashReference:
 		a.References[r.Name().String()] = r.Hash()
 	default:
-		return plumbing.ErrInvalidType
+		return errors.WithStack(plumbing.ErrInvalidType)
 	}
 
 	return nil
@@ -70,7 +71,7 @@ func (a *AdvRefs) AddReference(r *plumbing.Reference) error {
 func (a *AdvRefs) AllReferences() (memory.ReferenceStorage, error) {
 	s := memory.ReferenceStorage{}
 	if err := a.addRefs(s); err != nil {
-		return s, plumbing.NewUnexpectedError(err)
+		return s, errors.WithStack(plumbing.NewUnexpectedError(err))
 	}
 
 	return s, nil
@@ -121,7 +122,7 @@ func (a *AdvRefs) resolveHead(s storer.ReferenceStorer) error {
 		}
 	}
 
-	if err != nil && err != plumbing.ErrReferenceNotFound {
+	if err != nil && !errors.Is(err, plumbing.ErrReferenceNotFound) {
 		return err
 	}
 
@@ -159,7 +160,7 @@ func (a *AdvRefs) resolveHead(s storer.ReferenceStorer) error {
 	}
 
 	if !headSet {
-		return plumbing.ErrReferenceNotFound
+		return errors.WithStack(plumbing.ErrReferenceNotFound)
 	}
 
 	return nil

@@ -1,10 +1,10 @@
 package config
 
 import (
-	"errors"
 	"strings"
 
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -32,12 +32,12 @@ type RefSpec string
 func (s RefSpec) Validate() error {
 	spec := string(s)
 	if strings.Count(spec, refSpecSeparator) != 1 {
-		return ErrRefSpecMalformedSeparator
+		return errors.WithStack(ErrRefSpecMalformedSeparator)
 	}
 
 	sep := strings.Index(spec, refSpecSeparator)
 	if sep == len(spec)-1 {
-		return ErrRefSpecMalformedSeparator
+		return errors.WithStack(ErrRefSpecMalformedSeparator)
 	}
 
 	ws := strings.Count(spec[0:sep], refSpecWildcard)
@@ -46,7 +46,7 @@ func (s RefSpec) Validate() error {
 		return nil
 	}
 
-	return ErrRefSpecMalformedWildcard
+	return errors.WithStack(ErrRefSpecMalformedWildcard)
 }
 
 // IsForceUpdate returns if update is allowed in non fast-forward merges.

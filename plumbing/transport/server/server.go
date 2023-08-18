@@ -89,7 +89,7 @@ func (s *session) Close() error {
 }
 
 func (s *session) SetAuth(transport.AuthMethod) error {
-	//TODO: deprecate
+	// TODO: deprecate
 	return nil
 }
 
@@ -249,7 +249,7 @@ func (s *rpSession) ReceivePack(ctx context.Context, req *packp.ReferenceUpdateR
 
 	s.caps = req.Capabilities
 
-	//TODO: Implement 'atomic' update of references.
+	// TODO: Implement 'atomic' update of references.
 
 	if req.Packfile != nil {
 		r := ioutil.NewContextReadCloser(ctx, req.Packfile)
@@ -372,7 +372,7 @@ func (*rpSession) setSupportedCapabilities(c *capability.List) error {
 
 func setHEAD(s storer.Storer, ar *packp.AdvRefs) error {
 	ref, err := s.Reference(plumbing.HEAD)
-	if err == plumbing.ErrReferenceNotFound {
+	if errors.Is(err, plumbing.ErrReferenceNotFound) {
 		return nil
 	}
 
@@ -386,7 +386,7 @@ func setHEAD(s storer.Storer, ar *packp.AdvRefs) error {
 		}
 
 		ref, err = storer.ResolveReference(s, ref.Target())
-		if err == plumbing.ErrReferenceNotFound {
+		if errors.Is(err, plumbing.ErrReferenceNotFound) {
 			return nil
 		}
 
@@ -406,7 +406,7 @@ func setHEAD(s storer.Storer, ar *packp.AdvRefs) error {
 }
 
 func setReferences(s storer.Storer, ar *packp.AdvRefs) error {
-	//TODO: add peeled references.
+	// TODO: add peeled references.
 	iter, err := s.IterReferences()
 	if err != nil {
 		return err
@@ -424,7 +424,7 @@ func setReferences(s storer.Storer, ar *packp.AdvRefs) error {
 
 func referenceExists(s storer.ReferenceStorer, n plumbing.ReferenceName) (bool, error) {
 	_, err := s.Reference(n)
-	if err == plumbing.ErrReferenceNotFound {
+	if errors.Is(err, plumbing.ErrReferenceNotFound) {
 		return false, nil
 	}
 

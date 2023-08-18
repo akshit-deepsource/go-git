@@ -206,7 +206,7 @@ func (s *ParserSuite) TestParseWithInvalidExpression(c *C) {
 	for s, e := range datas {
 		parser := NewParser(bytes.NewBufferString(s))
 		_, err := parser.Parse()
-		c.Assert(err, DeepEquals, e)
+		c.Assert(err.Error() == e.Error(), Equals, true)
 	}
 }
 
@@ -244,7 +244,7 @@ func (s *ParserSuite) TestParseAtWithInvalidExpression(c *C) {
 
 		_, err := parser.parseAt()
 
-		c.Assert(err, DeepEquals, e)
+		c.Assert(err.Error() == e.Error(), Equals, true)
 	}
 }
 
@@ -286,7 +286,7 @@ func (s *ParserSuite) TestParseCaretWithUnValidExpression(c *C) {
 
 		_, err := parser.parseCaret()
 
-		c.Assert(err, DeepEquals, e)
+		c.Assert(err.Error() == e.Error(), Equals, true)
 	}
 }
 
@@ -342,7 +342,7 @@ func (s *ParserSuite) TestParseColonWithUnValidExpression(c *C) {
 
 		_, err := parser.parseColon()
 
-		c.Assert(err, DeepEquals, e)
+		c.Assert(err.Error() == e.Error(), Equals, true)
 	}
 }
 
@@ -394,6 +394,6 @@ func (s *ParserSuite) TestParseRefWithInvalidName(c *C) {
 
 		_, err := parser.parseRef()
 
-		c.Assert(err, DeepEquals, e)
+		c.Assert(err.Error() == e.Error(), Equals, true)
 	}
 }

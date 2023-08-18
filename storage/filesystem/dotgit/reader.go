@@ -8,6 +8,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/format/objfile"
 	"github.com/go-git/go-git/v5/utils/ioutil"
+	"github.com/pkg/errors"
 )
 
 var _ (plumbing.EncodedObject) = &EncodedObject{}
@@ -27,7 +28,7 @@ func (e *EncodedObject) Reader() (io.ReadCloser, error) {
 	f, err := e.dir.Object(e.h)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, plumbing.ErrObjectNotFound
+			return nil, errors.WithStack(plumbing.ErrObjectNotFound)
 		}
 
 		return nil, err

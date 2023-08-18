@@ -8,6 +8,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/format/idxfile"
 	"github.com/go-git/go-git/v5/plumbing/format/packfile"
+	"github.com/pkg/errors"
 	. "gopkg.in/check.v1"
 )
 
@@ -29,7 +30,7 @@ func (s *PackfileSuite) TestGet(c *C) {
 	}
 
 	_, err := s.p.Get(plumbing.ZeroHash)
-	c.Assert(err, Equals, plumbing.ErrObjectNotFound)
+	c.Assert(errors.Is(err, plumbing.ErrObjectNotFound), Equals, true)
 }
 
 func (s *PackfileSuite) TestGetByOffset(c *C) {
@@ -41,7 +42,7 @@ func (s *PackfileSuite) TestGetByOffset(c *C) {
 	}
 
 	_, err := s.p.GetByOffset(math.MaxInt64)
-	c.Assert(err, Equals, plumbing.ErrObjectNotFound)
+	c.Assert(errors.Is(err, plumbing.ErrObjectNotFound), Equals, true)
 }
 
 func (s *PackfileSuite) TestID(c *C) {
@@ -192,13 +193,13 @@ func (s *PackfileSuite) TestDecodeByTypeConstructor(c *C) {
 	defer packfile.Close()
 
 	_, err := packfile.GetByType(plumbing.OFSDeltaObject)
-	c.Assert(err, Equals, plumbing.ErrInvalidType)
+	c.Assert(errors.Is(err, plumbing.ErrInvalidType), Equals, true)
 
 	_, err = packfile.GetByType(plumbing.REFDeltaObject)
-	c.Assert(err, Equals, plumbing.ErrInvalidType)
+	c.Assert(errors.Is(err, plumbing.ErrInvalidType), Equals, true)
 
 	_, err = packfile.GetByType(plumbing.InvalidObject)
-	c.Assert(err, Equals, plumbing.ErrInvalidType)
+	c.Assert(errors.Is(err, plumbing.ErrInvalidType), Equals, true)
 }
 
 var expectedHashes = []string{

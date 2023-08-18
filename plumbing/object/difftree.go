@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-git/go-git/v5/utils/merkletrie"
 	"github.com/go-git/go-git/v5/utils/merkletrie/noder"
+	"github.com/pkg/errors"
 )
 
 // DiffTree compares the content and mode of the blobs found via two
@@ -75,8 +76,8 @@ func DiffTreeWithOptions(
 
 	merkletrieChanges, err := merkletrie.DiffTreeContext(ctx, from, to, hashEqual)
 	if err != nil {
-		if err == merkletrie.ErrCanceled {
-			return nil, ErrCanceled
+		if errors.Is(err, merkletrie.ErrCanceled) {
+			return nil, errors.WithStack(ErrCanceled)
 		}
 		return nil, err
 	}

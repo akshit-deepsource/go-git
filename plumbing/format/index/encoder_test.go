@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/pkg/errors"
 
 	"github.com/google/go-cmp/cmp"
 	. "gopkg.in/check.v1"
@@ -62,7 +63,7 @@ func (s *IndexSuite) TestEncodeUnsupportedVersion(c *C) {
 	buf := bytes.NewBuffer(nil)
 	e := NewEncoder(buf)
 	err := e.Encode(idx)
-	c.Assert(err, Equals, ErrUnsupportedVersion)
+	c.Assert(errors.Is(err, ErrUnsupportedVersion), Equals, true)
 }
 
 func (s *IndexSuite) TestEncodeWithIntentToAddUnsupportedVersion(c *C) {

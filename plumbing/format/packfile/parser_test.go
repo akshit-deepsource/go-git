@@ -14,6 +14,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/format/packfile"
 	"github.com/go-git/go-git/v5/plumbing/storer"
 	"github.com/go-git/go-git/v5/storage/filesystem"
+	"github.com/pkg/errors"
 	. "gopkg.in/check.v1"
 )
 
@@ -98,7 +99,7 @@ func (s *ParserSuite) TestThinPack(c *C) {
 	c.Assert(err, IsNil)
 
 	_, err = parser.Parse()
-	c.Assert(err, Equals, plumbing.ErrObjectNotFound)
+	c.Assert(errors.Is(err, plumbing.ErrObjectNotFound), Equals, true)
 
 	path, err = util.TempDir(fs, "", "")
 	c.Assert(err, IsNil)
@@ -117,7 +118,7 @@ func (s *ParserSuite) TestThinPack(c *C) {
 
 	// Check that the test object that will come with our thin pack is *not* in the repo
 	_, err = r.Storer.EncodedObject(plumbing.CommitObject, plumbing.NewHash(thinpack.Head))
-	c.Assert(err, Equals, plumbing.ErrObjectNotFound)
+	c.Assert(errors.Is(err, plumbing.ErrObjectNotFound), Equals, true)
 
 	// Now unpack the thin pack:
 	scanner = packfile.NewScanner(thinpack.Packfile())

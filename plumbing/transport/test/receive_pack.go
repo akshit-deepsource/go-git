@@ -15,6 +15,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/protocol/packp/capability"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/storage/memory"
+	"github.com/pkg/errors"
 
 	fixtures "github.com/go-git/go-git-fixtures/v4"
 	. "gopkg.in/check.v1"
@@ -42,7 +43,7 @@ func (s *ReceivePackSuite) TestAdvertisedReferencesNotExists(c *C) {
 	r, err := s.Client.NewReceivePackSession(s.NonExistentEndpoint, s.EmptyAuth)
 	c.Assert(err, IsNil)
 	ar, err := r.AdvertisedReferences()
-	c.Assert(err, Equals, transport.ErrRepositoryNotFound)
+	c.Assert(errors.Is(err, transport.ErrRepositoryNotFound), Equals, true)
 	c.Assert(ar, IsNil)
 	c.Assert(r.Close(), IsNil)
 
@@ -203,7 +204,7 @@ func (s *ReceivePackSuite) TestSendPackOnNonEmptyWithReportStatusWithError(c *C)
 	req.Capabilities.Set(capability.ReportStatus)
 
 	report, err := s.receivePackNoCheck(c, endpoint, req, fixture, full)
-	//XXX: Recent git versions return "failed to update ref", while older
+	// XXX: Recent git versions return "failed to update ref", while older
 	//     (>=1.9) return "failed to lock".
 	c.Assert(err, ErrorMatches, ".*(failed to update ref|failed to lock).*")
 	c.Assert(report.UnpackStatus, Equals, "ok")

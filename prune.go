@@ -1,11 +1,11 @@
 package git
 
 import (
-	"errors"
 	"time"
 
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/storer"
+	"github.com/pkg/errors"
 )
 
 type PruneHandler func(unreferencedObjectHash plumbing.Hash) error
@@ -24,7 +24,7 @@ var ErrLooseObjectsNotSupported = errors.New("loose objects not supported")
 func (r *Repository) DeleteObject(hash plumbing.Hash) error {
 	los, ok := r.Storer.(storer.LooseObjectStorer)
 	if !ok {
-		return ErrLooseObjectsNotSupported
+		return errors.WithStack(ErrLooseObjectsNotSupported)
 	}
 
 	return los.DeleteLooseObject(hash)
@@ -33,7 +33,7 @@ func (r *Repository) DeleteObject(hash plumbing.Hash) error {
 func (r *Repository) Prune(opt PruneOptions) error {
 	los, ok := r.Storer.(storer.LooseObjectStorer)
 	if !ok {
-		return ErrLooseObjectsNotSupported
+		return errors.WithStack(ErrLooseObjectsNotSupported)
 	}
 
 	pw := newObjectWalker(r.Storer)

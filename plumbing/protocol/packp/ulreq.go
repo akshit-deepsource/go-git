@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/protocol/packp/capability"
+	"github.com/pkg/errors"
 )
 
 // UploadRequest values represent the information transmitted on a
@@ -111,7 +112,7 @@ func NewUploadRequestFromCapabilities(adv *capability.List) *UploadRequest {
 //   - MUST contain only maximum of one of capability.MultiACK and capability.MultiACKDetailed
 func (req *UploadRequest) Validate() error {
 	if len(req.Wants) == 0 {
-		return fmt.Errorf("want can't be empty")
+		return errors.WithStack(fmt.Errorf("want can't be empty"))
 	}
 
 	if err := req.validateRequiredCapabilities(); err != nil {
@@ -129,23 +130,23 @@ func (req *UploadRequest) validateRequiredCapabilities() error {
 	msg := "missing capability %s"
 
 	if len(req.Shallows) != 0 && !req.Capabilities.Supports(capability.Shallow) {
-		return fmt.Errorf(msg, capability.Shallow)
+		return errors.WithStack(fmt.Errorf(msg, capability.Shallow))
 	}
 
 	switch req.Depth.(type) {
 	case DepthCommits:
 		if req.Depth != DepthCommits(0) {
 			if !req.Capabilities.Supports(capability.Shallow) {
-				return fmt.Errorf(msg, capability.Shallow)
+				return errors.WithStack(fmt.Errorf(msg, capability.Shallow))
 			}
 		}
 	case DepthSince:
 		if !req.Capabilities.Supports(capability.DeepenSince) {
-			return fmt.Errorf(msg, capability.DeepenSince)
+			return errors.WithStack(fmt.Errorf(msg, capability.DeepenSince))
 		}
 	case DepthReference:
 		if !req.Capabilities.Supports(capability.DeepenNot) {
-			return fmt.Errorf(msg, capability.DeepenNot)
+			return errors.WithStack(fmt.Errorf(msg, capability.DeepenNot))
 		}
 	}
 
@@ -156,12 +157,12 @@ func (req *UploadRequest) validateConflictCapabilities() error {
 	msg := "capabilities %s and %s are mutually exclusive"
 	if req.Capabilities.Supports(capability.Sideband) &&
 		req.Capabilities.Supports(capability.Sideband64k) {
-		return fmt.Errorf(msg, capability.Sideband, capability.Sideband64k)
+		return errors.WithStack(fmt.Errorf(msg, capability.Sideband, capability.Sideband64k))
 	}
 
 	if req.Capabilities.Supports(capability.MultiACK) &&
 		req.Capabilities.Supports(capability.MultiACKDetailed) {
-		return fmt.Errorf(msg, capability.MultiACK, capability.MultiACKDetailed)
+		return errors.WithStack(fmt.Errorf(msg, capability.MultiACK, capability.MultiACKDetailed))
 	}
 
 	return nil

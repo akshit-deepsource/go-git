@@ -1,10 +1,10 @@
 package storer
 
 import (
-	"errors"
 	"io"
 
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/pkg/errors"
 )
 
 const MaxResolveRecursion = 1024
@@ -80,7 +80,7 @@ func (iter *referenceFilteredIter) ForEach(cb func(*plumbing.Reference) error) e
 		}
 
 		if err := cb(r); err != nil {
-			if err == ErrStop {
+			if errors.Is(err, ErrStop) {
 				break
 			}
 
@@ -152,7 +152,7 @@ func forEachReferenceIter(iter bareReferenceIterator, cb func(*plumbing.Referenc
 		}
 
 		if err := cb(obj); err != nil {
-			if err == ErrStop {
+			if errors.Is(err, ErrStop) {
 				return nil
 			}
 
@@ -227,7 +227,7 @@ func resolveReference(s ReferenceStorer, r *plumbing.Reference, recursion int) (
 	}
 
 	if recursion > MaxResolveRecursion {
-		return nil, ErrMaxResolveRecursion
+		return nil, errors.WithStack(ErrMaxResolveRecursion)
 	}
 
 	t, err := s.Reference(r.Target())

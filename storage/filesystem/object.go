@@ -15,6 +15,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/storer"
 	"github.com/go-git/go-git/v5/storage/filesystem/dotgit"
 	"github.com/go-git/go-git/v5/utils/ioutil"
+	"github.com/pkg/errors"
 
 	"github.com/go-git/go-billy/v5"
 )
@@ -118,7 +119,7 @@ func (s *ObjectStorage) PackfileWriter() (io.WriteCloser, error) {
 // SetEncodedObject adds a new object to the storage.
 func (s *ObjectStorage) SetEncodedObject(o plumbing.EncodedObject) (h plumbing.Hash, err error) {
 	if o.Type() == plumbing.OFSDeltaObject || o.Type() == plumbing.REFDeltaObject {
-		return plumbing.ZeroHash, plumbing.ErrInvalidType
+		return plumbing.ZeroHash, errors.WithStack(plumbing.ErrInvalidType)
 	}
 
 	ow, err := s.dir.NewObject()
@@ -167,7 +168,7 @@ func (s *ObjectStorage) HasEncodedObject(h plumbing.Hash) (err error) {
 	}
 	_, _, offset := s.findObjectInPackfile(h)
 	if offset == -1 {
-		return plumbing.ErrObjectNotFound
+		return errors.WithStack(plumbing.ErrObjectNotFound)
 	}
 	return nil
 }
@@ -177,7 +178,7 @@ func (s *ObjectStorage) encodedObjectSizeFromUnpacked(h plumbing.Hash) (
 	f, err := s.dir.Object(h)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return 0, plumbing.ErrObjectNotFound
+			return 0, errors.WithStack(plumbing.ErrObjectNotFound)
 		}
 
 		return 0, err
@@ -268,7 +269,7 @@ func (s *ObjectStorage) encodedObjectSizeFromPackfile(h plumbing.Hash) (
 
 	pack, _, offset := s.findObjectInPackfile(h)
 	if offset == -1 {
-		return 0, plumbing.ErrObjectNotFound
+		return 0, errors.WithStack(plumbing.ErrObjectNotFound)
 	}
 
 	idx := s.index[pack]
@@ -278,7 +279,7 @@ func (s *ObjectStorage) encodedObjectSizeFromPackfile(h plumbing.Hash) (
 		if ok {
 			return obj.Size(), nil
 		}
-	} else if err != nil && err != plumbing.ErrObjectNotFound {
+	} else if err != nil && !errors.Is(err, plumbing.ErrObjectNotFound) {
 		return 0, err
 	}
 
@@ -299,7 +300,7 @@ func (s *ObjectStorage) encodedObjectSizeFromPackfile(h plumbing.Hash) (
 func (s *ObjectStorage) EncodedObjectSize(h plumbing.Hash) (
 	size int64, err error) {
 	size, err = s.encodedObjectSizeFromUnpacked(h)
-	if err != nil && err != plumbing.ErrObjectNotFound {
+	if err != nil && !errors.Is(err, plumbing.ErrObjectNotFound) {
 		return 0, err
 	} else if err == nil {
 		return size, nil
@@ -316,19 +317,19 @@ func (s *ObjectStorage) EncodedObject(t plumbing.ObjectType, h plumbing.Hash) (p
 
 	if s.index != nil {
 		obj, err = s.getFromPackfile(h, false)
-		if err == plumbing.ErrObjectNotFound {
+		if errors.Is(err, plumbing.ErrObjectNotFound) {
 			obj, err = s.getFromUnpacked(h)
 		}
 	} else {
 		obj, err = s.getFromUnpacked(h)
-		if err == plumbing.ErrObjectNotFound {
+		if errors.Is(err, plumbing.ErrObjectNotFound) {
 			obj, err = s.getFromPackfile(h, false)
 		}
 	}
 
 	// If the error is still object not found, check if it's a shared object
 	// repository.
-	if err == plumbing.ErrObjectNotFound {
+	if errors.Is(err, plumbing.ErrObjectNotFound) {
 		dotgits, e := s.dir.Alternates()
 		if e == nil {
 			// Create a new object storage with the DotGit(s) and check for the
@@ -349,7 +350,7 @@ func (s *ObjectStorage) EncodedObject(t plumbing.ObjectType, h plumbing.Hash) (p
 	}
 
 	if plumbing.AnyObject != t && obj.Type() != t {
-		return nil, plumbing.ErrObjectNotFound
+		return nil, errors.WithStack(plumbing.ErrObjectNotFound)
 	}
 
 	return obj, nil
@@ -360,7 +361,7 @@ func (s *ObjectStorage) EncodedObject(t plumbing.ObjectType, h plumbing.Hash) (p
 func (s *ObjectStorage) DeltaObject(t plumbing.ObjectType,
 	h plumbing.Hash) (plumbing.EncodedObject, error) {
 	obj, err := s.getFromUnpacked(h)
-	if err == plumbing.ErrObjectNotFound {
+	if errors.Is(err, plumbing.ErrObjectNotFound) {
 		obj, err = s.getFromPackfile(h, true)
 	}
 
@@ -369,7 +370,7 @@ func (s *ObjectStorage) DeltaObject(t plumbing.ObjectType,
 	}
 
 	if plumbing.AnyObject != t && obj.Type() != t {
-		return nil, plumbing.ErrObjectNotFound
+		return nil, errors.WithStack(plumbing.ErrObjectNotFound)
 	}
 
 	return obj, nil
@@ -379,7 +380,7 @@ func (s *ObjectStorage) getFromUnpacked(h plumbing.Hash) (obj plumbing.EncodedOb
 	f, err := s.dir.Object(h)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, plumbing.ErrObjectNotFound
+			return nil, errors.WithStack(plumbing.ErrObjectNotFound)
 		}
 
 		return nil, err
@@ -446,7 +447,7 @@ func (s *ObjectStorage) getFromPackfile(h plumbing.Hash, canBeDelta bool) (
 
 	pack, hash, offset := s.findObjectInPackfile(h)
 	if offset == -1 {
-		return nil, plumbing.ErrObjectNotFound
+		return nil, errors.WithStack(plumbing.ErrObjectNotFound)
 	}
 
 	idx := s.index[pack]
@@ -478,7 +479,7 @@ func (s *ObjectStorage) decodeObjectAt(
 		}
 	}
 
-	if err != nil && err != plumbing.ErrObjectNotFound {
+	if err != nil && !errors.Is(err, plumbing.ErrObjectNotFound) {
 		return nil, err
 	}
 
@@ -852,7 +853,7 @@ func hashListAsMap(l []plumbing.Hash) map[plumbing.Hash]struct{} {
 
 func (s *ObjectStorage) ForEachObjectHash(fun func(plumbing.Hash) error) error {
 	err := s.dir.ForEachObjectHash(fun)
-	if err == storer.ErrStop {
+	if errors.Is(err, storer.ErrStop) {
 		return nil
 	}
 	return err

@@ -3,6 +3,7 @@ package object
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"strings"
 	"time"
@@ -37,7 +38,7 @@ func (s *SuiteCommit) TestDecodeNonCommit(c *C) {
 
 	commit := &Commit{}
 	err = commit.Decode(blob)
-	c.Assert(err, Equals, ErrUnsupportedObject)
+	c.Assert(errors.Is(err, ErrUnsupportedObject), Equals, true)
 }
 
 func (s *SuiteCommit) TestType(c *C) {
@@ -485,7 +486,7 @@ func (s *SuiteCommit) TestMalformedHeader(c *C) {
 }
 
 func (s *SuiteCommit) TestEncodeWithoutSignature(c *C) {
-	//Similar to TestString since no signature
+	// Similar to TestString since no signature
 	encoded := &plumbing.MemoryObject{}
 	err := s.Commit.EncodeWithoutSignature(encoded)
 	c.Assert(err, IsNil)

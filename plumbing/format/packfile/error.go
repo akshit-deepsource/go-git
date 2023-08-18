@@ -1,6 +1,8 @@
 package packfile
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // Error specifies errors returned during packfile parsing.
 type Error struct {

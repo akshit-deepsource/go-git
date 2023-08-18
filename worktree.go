@@ -2,7 +2,6 @@ package git
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -21,6 +20,7 @@ import (
 	"github.com/go-git/go-git/v5/utils/ioutil"
 	"github.com/go-git/go-git/v5/utils/merkletrie"
 	"github.com/go-git/go-git/v5/utils/sync"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -81,7 +81,7 @@ func (w *Worktree) PullContext(ctx context.Context, o *PullOptions) error {
 	})
 
 	updated := true
-	if err == NoErrAlreadyUpToDate {
+	if errors.Is(err, NoErrAlreadyUpToDate) {
 		updated = false
 	} else if err != nil {
 		return err
@@ -100,7 +100,7 @@ func (w *Worktree) PullContext(ctx context.Context, o *PullOptions) error {
 		}
 
 		if !updated && headAheadOfRef {
-			return NoErrAlreadyUpToDate
+			return errors.WithStack(NoErrAlreadyUpToDate)
 		}
 
 		ff, err := isFastForward(w.r.Storer, head.Hash(), ref.Hash())
@@ -109,11 +109,11 @@ func (w *Worktree) PullContext(ctx context.Context, o *PullOptions) error {
 		}
 
 		if !ff {
-			return ErrNonFastForwardUpdate
+			return errors.WithStack(ErrNonFastForwardUpdate)
 		}
 	}
 
-	if err != nil && err != plumbing.ErrReferenceNotFound {
+	if err != nil && !errors.Is(err, plumbing.ErrReferenceNotFound) {
 		return err
 	}
 
@@ -193,7 +193,7 @@ func (w *Worktree) createBranch(opts *CheckoutOptions) error {
 		return fmt.Errorf("a branch named %q already exists", opts.Branch)
 	}
 
-	if err != plumbing.ErrReferenceNotFound {
+	if !errors.Is(err, plumbing.ErrReferenceNotFound) {
 		return err
 	}
 
@@ -233,7 +233,7 @@ func (w *Worktree) getCommitFromCheckoutOptions(opts *CheckoutOptions) (plumbing
 	switch o := o.(type) {
 	case *object.Tag:
 		if o.TargetType != plumbing.CommitObject {
-			return plumbing.ZeroHash, fmt.Errorf("unsupported tag object target %q", o.TargetType)
+			return plumbing.ZeroHash, errors.WithStack(fmt.Errorf("unsupported tag object target %q", o.TargetType))
 		}
 
 		return o.Target, nil
@@ -241,7 +241,7 @@ func (w *Worktree) getCommitFromCheckoutOptions(opts *CheckoutOptions) (plumbing
 		return o.Hash, nil
 	}
 
-	return plumbing.ZeroHash, fmt.Errorf("unsupported tag target %q", o.Type())
+	return plumbing.ZeroHash, errors.WithStack(fmt.Errorf("unsupported tag target %q", o.Type()))
 }
 
 func (w *Worktree) setHEADToCommit(commit plumbing.Hash) error {
@@ -277,7 +277,7 @@ func (w *Worktree) ResetSparsely(opts *ResetOptions, dirs []string) error {
 		}
 
 		if unstaged {
-			return ErrUnstagedChanges
+			return errors.WithStack(ErrUnstagedChanges)
 		}
 	}
 
@@ -458,7 +458,7 @@ func (w *Worktree) setHEADCommit(commit plumbing.Hash) error {
 	}
 
 	if !branch.Name().IsBranch() {
-		return fmt.Errorf("invalid HEAD target should be a branch, found %s", branch.Type())
+		return errors.WithStack(fmt.Errorf("invalid HEAD target should be a branch, found %s", branch.Type()))
 	}
 
 	branch = plumbing.NewHashReference(branch.Name(), commit)
@@ -658,7 +658,7 @@ func (w *Worktree) Submodule(name string) (*Submodule, error) {
 		}
 	}
 
-	return nil, ErrSubmoduleNotFound
+	return nil, errors.WithStack(ErrSubmoduleNotFound)
 }
 
 // Submodules returns all the available submodules
@@ -704,7 +704,7 @@ func (w *Worktree) isSymlink(path string) bool {
 
 func (w *Worktree) readGitmodulesFile() (*config.Modules, error) {
 	if w.isSymlink(gitmodulesFile) {
-		return nil, ErrGitModulesSymlink
+		return nil, errors.WithStack(ErrGitModulesSymlink)
 	}
 
 	f, err := w.Filesystem.Open(gitmodulesFile)

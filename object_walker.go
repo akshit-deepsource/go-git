@@ -7,6 +7,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/storage"
+	"github.com/pkg/errors"
 )
 
 type objectWalker struct {
@@ -60,7 +61,7 @@ func (p *objectWalker) walkObjectTree(hash plumbing.Hash) error {
 	// Fetch the object.
 	obj, err := object.GetObject(p.Storer, hash)
 	if err != nil {
-		return fmt.Errorf("getting object %s failed: %v", hash, err)
+		return errors.WithStack(fmt.Errorf("getting object %s failed: %v", hash, err))
 	}
 	// Walk all children depending on object type.
 	switch obj := obj.(type) {
@@ -98,7 +99,7 @@ func (p *objectWalker) walkObjectTree(hash plumbing.Hash) error {
 		return p.walkObjectTree(obj.Target)
 	default:
 		// Error out on unhandled object types.
-		return fmt.Errorf("unknown object %X %s %T", obj.ID(), obj.Type(), obj)
+		return errors.WithStack(fmt.Errorf("unknown object %X %s %T", obj.ID(), obj.Type(), obj))
 	}
 	return nil
 }

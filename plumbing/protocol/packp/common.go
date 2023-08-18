@@ -2,6 +2,8 @@ package packp
 
 import (
 	"fmt"
+
+	"github.com/pkg/errors"
 )
 
 type stateFn func() stateFn
@@ -57,7 +59,7 @@ type ErrUnexpectedData struct {
 // NewErrUnexpectedData returns a new ErrUnexpectedData containing the data and
 // the message given
 func NewErrUnexpectedData(msg string, data []byte) error {
-	return &ErrUnexpectedData{Msg: msg, Data: data}
+	return errors.WithStack(&ErrUnexpectedData{Msg: msg, Data: data})
 }
 
 func (err *ErrUnexpectedData) Error() string {

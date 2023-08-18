@@ -1,6 +1,7 @@
 package commitgraph
 
 import (
+	"errors"
 	"io"
 	"time"
 
@@ -60,7 +61,7 @@ func newParentgraphCommitNodeIter(node CommitNode) CommitNodeIter {
 // there are no more commits, it returns io.EOF.
 func (iter *parentCommitNodeIter) Next() (CommitNode, error) {
 	obj, err := iter.node.ParentNode(iter.i)
-	if err == object.ErrParentNotFound {
+	if errors.Is(err, object.ErrParentNotFound) {
 		return nil, io.EOF
 	}
 	if err == nil {
@@ -85,7 +86,7 @@ func (iter *parentCommitNodeIter) ForEach(cb func(CommitNode) error) error {
 		}
 
 		if err := cb(obj); err != nil {
-			if err == storer.ErrStop {
+			if errors.Is(err, storer.ErrStop) {
 				return nil
 			}
 

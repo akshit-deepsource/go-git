@@ -3,7 +3,6 @@ package git
 import (
 	"bytes"
 	"container/heap"
-	"errors"
 	"fmt"
 	"io"
 	"strconv"
@@ -13,6 +12,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/utils/diff"
+	"github.com/pkg/errors"
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
@@ -84,7 +84,7 @@ func Blame(c *object.Commit, path string) (*BlameResult, error) {
 		items = items[:0]
 		for {
 			if b.q.Len() == 0 {
-				return nil, errors.New("invalid state: no items left on the blame queue")
+				return nil, errors.WithStack(errors.New("invalid state: no items left on the blame queue"))
 			}
 			item := b.q.Pop()
 			items = append(items, item)
@@ -335,7 +335,7 @@ func (b *blame) addBlames(curItems []*queueItem) (bool, error) {
 					prevl += hLines
 					continue out
 				default:
-					return false, errors.New("invalid state: invalid hunk Type")
+					return false, errors.WithStack(errors.New("invalid state: invalid hunk Type"))
 				}
 			}
 		}
@@ -411,7 +411,7 @@ func applyNeeds(child *queueItem, needsMap []lineMap, identicalToChild bool, par
 		for i := range child.NeedsMap {
 			l := &child.NeedsMap[i]
 			if l.Cur != needsMap[i].Cur || l.Orig != needsMap[i].Orig {
-				return false, errors.New("needsMap isn't the same? Why not??")
+				return false, errors.WithStack(errors.New("needsMap isn't the same? Why not??"))
 			}
 			if l.Commit == nil || parentNo < l.FromParentNo {
 				l.Commit = needsMap[i].Commit

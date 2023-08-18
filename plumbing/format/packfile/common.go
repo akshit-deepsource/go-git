@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-git/go-git/v5/plumbing/storer"
 	"github.com/go-git/go-git/v5/utils/ioutil"
+	"github.com/pkg/errors"
 )
 
 var signature = []byte{'P', 'A', 'C', 'K'}
@@ -53,7 +54,7 @@ func WritePackfileToObjectStorage(
 	var n int64
 	n, err = io.Copy(w, packfile)
 	if err == nil && n == 0 {
-		return ErrEmptyPackfile
+		return errors.WithStack(ErrEmptyPackfile)
 	}
 
 	return err

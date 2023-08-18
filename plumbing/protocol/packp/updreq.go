@@ -1,12 +1,12 @@
 package packp
 
 import (
-	"errors"
 	"io"
 
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/protocol/packp/capability"
 	"github.com/go-git/go-git/v5/plumbing/protocol/packp/sideband"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -48,6 +48,7 @@ func NewReferenceUpdateRequest() *ReferenceUpdateRequest {
 //   - ofs-delta
 //   - ref-delta
 //   - delete-refs
+//
 // It leaves up to the user to add the following capabilities later:
 //   - atomic
 //   - ofs-delta
@@ -71,7 +72,7 @@ func NewReferenceUpdateRequestFromCapabilities(adv *capability.List) *ReferenceU
 
 func (req *ReferenceUpdateRequest) validate() error {
 	if len(req.Commands) == 0 {
-		return ErrEmptyCommands
+		return errors.WithStack(ErrEmptyCommands)
 	}
 
 	for _, c := range req.Commands {
@@ -116,7 +117,7 @@ func (c *Command) Action() Action {
 
 func (c *Command) validate() error {
 	if c.Action() == Invalid {
-		return ErrMalformedCommand
+		return errors.WithStack(ErrMalformedCommand)
 	}
 
 	return nil

@@ -2,12 +2,12 @@ package objfile
 
 import (
 	"compress/zlib"
-	"errors"
 	"io"
 	"strconv"
 
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/utils/sync"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -44,10 +44,10 @@ func NewWriter(w io.Writer) *Writer {
 // negative size is provided, ErrNegativeSize is returned.
 func (w *Writer) WriteHeader(t plumbing.ObjectType, size int64) error {
 	if !t.Valid() {
-		return plumbing.ErrInvalidType
+		return errors.WithStack(plumbing.ErrInvalidType)
 	}
 	if size < 0 {
-		return ErrNegativeSize
+		return errors.WithStack(ErrNegativeSize)
 	}
 
 	b := t.Bytes()
@@ -72,7 +72,7 @@ func (w *Writer) prepareForWrite(t plumbing.ObjectType, size int64) {
 // more than size bytes are written after WriteHeader.
 func (w *Writer) Write(p []byte) (n int, err error) {
 	if w.closed {
-		return 0, ErrClosed
+		return 0, errors.WithStack(ErrClosed)
 	}
 
 	overwrite := false

@@ -46,7 +46,7 @@ func (s *TreeSuite) TestDecodeNonTree(c *C) {
 
 	tree := &Tree{}
 	err = tree.Decode(blob)
-	c.Assert(err, Equals, ErrUnsupportedObject)
+	c.Assert(errors.Is(err, ErrUnsupportedObject), Equals, true)
 }
 
 func (s *TreeSuite) TestType(c *C) {
@@ -66,7 +66,7 @@ func (s *TreeSuite) TestTree(c *C) {
 func (s *TreeSuite) TestTreeNotFound(c *C) {
 	d, err := s.Tree.Tree("not-found")
 	c.Assert(d, IsNil)
-	c.Assert(err, Equals, ErrDirectoryNotFound)
+	c.Assert(errors.Is(err, ErrDirectoryNotFound), Equals, true)
 }
 
 func (s *TreeSuite) TestTreeFailsWithExistingFiles(c *C) {
@@ -75,7 +75,7 @@ func (s *TreeSuite) TestTreeFailsWithExistingFiles(c *C) {
 
 	d, err := s.Tree.Tree("LICENSE")
 	c.Assert(d, IsNil)
-	c.Assert(err, Equals, ErrDirectoryNotFound)
+	c.Assert(errors.Is(err, ErrDirectoryNotFound), Equals, true)
 }
 
 func (s *TreeSuite) TestFile(c *C) {
@@ -87,7 +87,7 @@ func (s *TreeSuite) TestFile(c *C) {
 func (s *TreeSuite) TestFileNotFound(c *C) {
 	f, err := s.Tree.File("not-found")
 	c.Assert(f, IsNil)
-	c.Assert(err, Equals, ErrFileNotFound)
+	c.Assert(errors.Is(err, ErrFileNotFound), Equals, true)
 }
 
 func (s *TreeSuite) TestFileFailsWithExistingTrees(c *C) {
@@ -96,7 +96,7 @@ func (s *TreeSuite) TestFileFailsWithExistingTrees(c *C) {
 
 	f, err := s.Tree.File("vendor")
 	c.Assert(f, IsNil)
-	c.Assert(err, Equals, ErrFileNotFound)
+	c.Assert(errors.Is(err, ErrFileNotFound), Equals, true)
 }
 
 func (s *TreeSuite) TestSize(c *C) {
@@ -125,10 +125,10 @@ func (s *TreeSuite) TestFindEntry(c *C) {
 func (s *TreeSuite) TestFindEntryNotFound(c *C) {
 	e, err := s.Tree.FindEntry("not-found")
 	c.Assert(e, IsNil)
-	c.Assert(err, Equals, ErrEntryNotFound)
+	c.Assert(errors.Is(err, ErrEntryNotFound), Equals, true)
 	e, err = s.Tree.FindEntry("not-found/not-found/not-found")
 	c.Assert(e, IsNil)
-	c.Assert(err, Equals, ErrDirectoryNotFound)
+	c.Assert(errors.Is(err, ErrDirectoryNotFound), Equals, true)
 }
 
 // Overrides returned plumbing.EncodedObject for given hash.

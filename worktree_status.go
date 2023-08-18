@@ -2,7 +2,6 @@ package git
 
 import (
 	"bytes"
-	"errors"
 	"io"
 	"os"
 	"path"
@@ -20,6 +19,7 @@ import (
 	"github.com/go-git/go-git/v5/utils/merkletrie/filesystem"
 	mindex "github.com/go-git/go-git/v5/utils/merkletrie/index"
 	"github.com/go-git/go-git/v5/utils/merkletrie/noder"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -373,7 +373,7 @@ func (w *Worktree) AddGlob(pattern string) error {
 	}
 
 	if len(files) == 0 {
-		return ErrGlobNoMatches
+		return errors.WithStack(ErrGlobNoMatches)
 	}
 
 	s, err := w.Status()
@@ -678,7 +678,7 @@ func (w *Worktree) Move(from, to string) (plumbing.Hash, error) {
 	}
 
 	if _, err := w.Filesystem.Lstat(to); err == nil {
-		return plumbing.ZeroHash, ErrDestinationExists
+		return plumbing.ZeroHash, errors.WithStack(ErrDestinationExists)
 	}
 
 	idx, err := w.r.Storer.Index()

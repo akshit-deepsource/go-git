@@ -1,6 +1,7 @@
 package object
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -56,7 +57,7 @@ func (s *TagSuite) TestCommitError(c *C) {
 	commit, err := tag.Commit()
 	c.Assert(commit, IsNil)
 	c.Assert(err, NotNil)
-	c.Assert(err, Equals, ErrUnsupportedObject)
+	c.Assert(errors.Is(err, ErrUnsupportedObject), Equals, true)
 }
 
 func (s *TagSuite) TestCommit(c *C) {
@@ -75,7 +76,7 @@ func (s *TagSuite) TestBlobError(c *C) {
 	commit, err := tag.Blob()
 	c.Assert(commit, IsNil)
 	c.Assert(err, NotNil)
-	c.Assert(err, Equals, ErrUnsupportedObject)
+	c.Assert(errors.Is(err, ErrUnsupportedObject), Equals, true)
 }
 
 func (s *TagSuite) TestBlob(c *C) {
@@ -94,7 +95,7 @@ func (s *TagSuite) TestTreeError(c *C) {
 	tree, err := tag.Tree()
 	c.Assert(tree, IsNil)
 	c.Assert(err, NotNil)
-	c.Assert(err, Equals, ErrUnsupportedObject)
+	c.Assert(errors.Is(err, ErrUnsupportedObject), Equals, true)
 }
 
 func (s *TagSuite) TestTree(c *C) {
@@ -172,7 +173,7 @@ func (s *TagSuite) TestTagDecodeWrongType(c *C) {
 	obj := &plumbing.MemoryObject{}
 	obj.SetType(plumbing.BlobObject)
 	err := newTag.Decode(obj)
-	c.Assert(err, Equals, ErrUnsupportedObject)
+	c.Assert(errors.Is(err, ErrUnsupportedObject), Equals, true)
 }
 
 func (s *TagSuite) TestTagEncodeDecodeIdempotent(c *C) {
@@ -458,7 +459,7 @@ eQnkGpsz85DfEviLtk8cZjY/t6o8lPDLiwVjIzUBaA==
 }
 
 func (s *TagSuite) TestEncodeWithoutSignature(c *C) {
-	//Similar to TestString since no signature
+	// Similar to TestString since no signature
 	encoded := &plumbing.MemoryObject{}
 	tag := s.tag(c, plumbing.NewHash("b742a2a9fa0afcfa9a6fad080980fbc26b007c69"))
 	err := tag.EncodeWithoutSignature(encoded)

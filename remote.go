@@ -2,7 +2,6 @@ package git
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -26,6 +25,7 @@ import (
 	"github.com/go-git/go-git/v5/storage/filesystem"
 	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/go-git/go-git/v5/utils/ioutil"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -106,7 +106,7 @@ func (r *Remote) PushContext(ctx context.Context, o *PushOptions) (err error) {
 	}
 
 	if o.RemoteName != r.c.Name {
-		return fmt.Errorf("remote names don't match: %s != %s", o.RemoteName, r.c.Name)
+		return errors.WithStack(fmt.Errorf("remote names don't match: %s != %s", o.RemoteName, r.c.Name))
 	}
 
 	if o.RemoteURL == "" {
@@ -148,7 +148,7 @@ func (r *Remote) PushContext(ctx context.Context, o *PushOptions) (err error) {
 	}
 
 	if isDelete && !ar.Capabilities.Supports(capability.DeleteRefs) {
-		return ErrDeleteRefNotSupported
+		return errors.WithStack(ErrDeleteRefNotSupported)
 	}
 
 	if o.Force {
@@ -171,7 +171,7 @@ func (r *Remote) PushContext(ctx context.Context, o *PushOptions) (err error) {
 	}
 
 	if len(req.Commands) == 0 {
-		return NoErrAlreadyUpToDate
+		return errors.WithStack(NoErrAlreadyUpToDate)
 	}
 
 	objects := objectsToPush(req.Commands)
@@ -263,7 +263,7 @@ func (r *Remote) addReachableTags(localRefs []*plumbing.Reference, remoteRefs st
 		tagObject, err := object.GetObject(r.s, tag.Hash())
 		var tagCommit *object.Commit
 		if err != nil {
-			return fmt.Errorf("get tag object: %w", err)
+			return errors.WithStack(fmt.Errorf("get tag object: %w", err))
 		}
 
 		if tagObject.Type() != plumbing.TagObject {
@@ -272,12 +272,12 @@ func (r *Remote) addReachableTags(localRefs []*plumbing.Reference, remoteRefs st
 
 		annotatedTag, ok := tagObject.(*object.Tag)
 		if !ok {
-			return errors.New("could not get annotated tag object")
+			return errors.WithStack(errors.New("could not get annotated tag object"))
 		}
 
 		tagCommit, err = object.GetCommit(r.s, annotatedTag.Target)
 		if err != nil {
-			return fmt.Errorf("get annotated tag commit: %w", err)
+			return errors.WithStack(fmt.Errorf("get annotated tag commit: %w", err))
 		}
 
 		// only include tags that are reachable from one of the refs
@@ -293,7 +293,7 @@ func (r *Remote) addReachableTags(localRefs []*plumbing.Reference, remoteRefs st
 
 			c, err := object.GetCommit(r.s, cmd.New)
 			if err != nil {
-				return fmt.Errorf("get commit %v: %w", cmd.Name, err)
+				return errors.WithStack(fmt.Errorf("get commit %v: %w", cmd.Name, err))
 			}
 
 			if isAncestor, err := tagCommit.IsAncestor(c); err == nil && isAncestor {
@@ -454,7 +454,7 @@ func (r *Remote) fetch(ctx context.Context, o *FetchOptions) (sto storer.Referen
 	if !req.Depth.IsZero() {
 		req.Shallows, err = r.s.Shallow()
 		if err != nil {
-			return nil, fmt.Errorf("existing checkout is not shallow")
+			return nil, errors.WithStack(fmt.Errorf("existing checkout is not shallow"))
 		}
 	}
 
@@ -478,12 +478,12 @@ func (r *Remote) fetch(ctx context.Context, o *FetchOptions) (sto storer.Referen
 	if !updated {
 		updated, err = depthChanged(req.Shallows, r.s)
 		if err != nil {
-			return nil, fmt.Errorf("error checking depth change: %v", err)
+			return nil, errors.WithStack(fmt.Errorf("error checking depth change: %v", err))
 		}
 	}
 
 	if !updated {
-		return remoteRefs, NoErrAlreadyUpToDate
+		return remoteRefs, errors.WithStack(NoErrAlreadyUpToDate)
 	}
 
 	return remoteRefs, nil
@@ -682,7 +682,7 @@ func (r *Remote) addCommit(rs config.RefSpec,
 	req *packp.ReferenceUpdateRequest) error {
 
 	if rs.IsWildcard() {
-		return errors.New("can't use wildcard together with hash refspecs")
+		return errors.WithStack(errors.New("can't use wildcard together with hash refspecs"))
 	}
 
 	cmd := &packp.Command{
@@ -693,12 +693,12 @@ func (r *Remote) addCommit(rs config.RefSpec,
 	remoteRef, err := remoteRefs.Reference(cmd.Name)
 	if err == nil {
 		if remoteRef.Type() != plumbing.HashReference {
-			//TODO: check actual git behavior here
+			// TODO: check actual git behavior here
 			return nil
 		}
 
 		cmd.Old = remoteRef.Hash()
-	} else if err != plumbing.ErrReferenceNotFound {
+	} else if !errors.Is(err, plumbing.ErrReferenceNotFound) {
 		return err
 	}
 	if cmd.Old == cmd.New {
@@ -735,12 +735,12 @@ func (r *Remote) addReferenceIfRefSpecMatches(rs config.RefSpec,
 	remoteRef, err := remoteRefs.Reference(cmd.Name)
 	if err == nil {
 		if remoteRef.Type() != plumbing.HashReference {
-			//TODO: check actual git behavior here
+			// TODO: check actual git behavior here
 			return nil
 		}
 
 		cmd.Old = remoteRef.Hash()
-	} else if err != plumbing.ErrReferenceNotFound {
+	} else if !errors.Is(err, plumbing.ErrReferenceNotFound) {
 		return err
 	}
 
@@ -780,7 +780,7 @@ func (r *Remote) checkForceWithLease(localRef *plumbing.Reference, cmd *packp.Co
 		}
 
 		if cmd.Old != expectedOID {
-			return fmt.Errorf("non-fast-forward update: %s", cmd.Name.String())
+			return errors.WithStack(fmt.Errorf("non-fast-forward update: %s", cmd.Name.String()))
 		}
 	}
 
@@ -1006,7 +1006,7 @@ func doCalculateRefs(
 	}
 
 	if !matched && !s.IsWildcard() {
-		return nil, NoMatchingRefSpecError{refSpec: s}
+		return nil, errors.WithStack(NoMatchingRefSpecError{refSpec: s})
 	}
 
 	return refList, ret
@@ -1045,7 +1045,7 @@ func getWants(localStorer storage.Storer, refs memory.ReferenceStorage, depth in
 
 func objectExists(s storer.EncodedObjectStorer, h plumbing.Hash) (bool, error) {
 	_, err := s.EncodedObject(plumbing.AnyObject, h)
-	if err == plumbing.ErrObjectNotFound {
+	if errors.Is(err, plumbing.ErrObjectNotFound) {
 		return false, nil
 	}
 
@@ -1055,7 +1055,7 @@ func objectExists(s storer.EncodedObjectStorer, h plumbing.Hash) (bool, error) {
 func checkFastForwardUpdate(s storer.EncodedObjectStorer, remoteRefs storer.ReferenceStorer, cmd *packp.Command) error {
 	if cmd.Old == plumbing.ZeroHash {
 		_, err := remoteRefs.Reference(cmd.Name)
-		if err == plumbing.ErrReferenceNotFound {
+		if errors.Is(err, plumbing.ErrReferenceNotFound) {
 			return nil
 		}
 
@@ -1063,7 +1063,7 @@ func checkFastForwardUpdate(s storer.EncodedObjectStorer, remoteRefs storer.Refe
 			return err
 		}
 
-		return fmt.Errorf("non-fast-forward update: %s", cmd.Name.String())
+		return errors.WithStack(fmt.Errorf("non-fast-forward update: %s", cmd.Name.String()))
 	}
 
 	ff, err := isFastForward(s, cmd.Old, cmd.New)
@@ -1072,7 +1072,7 @@ func checkFastForwardUpdate(s storer.EncodedObjectStorer, remoteRefs storer.Refe
 	}
 
 	if !ff {
-		return fmt.Errorf("non-fast-forward update: %s", cmd.Name.String())
+		return errors.WithStack(fmt.Errorf("non-fast-forward update: %s", cmd.Name.String()))
 	}
 
 	return nil
@@ -1149,7 +1149,7 @@ func (r *Remote) isSupportedRefSpec(refs []config.RefSpec, ar *packp.AdvRefs) er
 		return nil
 	}
 
-	return ErrExactSHA1NotSupported
+	return errors.WithStack(ErrExactSHA1NotSupported)
 }
 
 func buildSidebandIfSupported(l *capability.List, reader io.Reader, p sideband.Progress) io.Reader {
@@ -1254,7 +1254,7 @@ func (r *Remote) buildFetchedTags(refs memory.ReferenceStorage) (updated bool, e
 		}
 
 		_, err := r.s.EncodedObject(plumbing.AnyObject, ref.Hash())
-		if err == plumbing.ErrObjectNotFound {
+		if errors.Is(err, plumbing.ErrObjectNotFound) {
 			continue
 		}
 
@@ -1290,7 +1290,7 @@ func (r *Remote) List(o *ListOptions) (rfs []*plumbing.Reference, err error) {
 		timeout = 10
 	}
 	if timeout < 0 {
-		return nil, fmt.Errorf("invalid timeout: %d", timeout)
+		return nil, errors.WithStack(fmt.Errorf("invalid timeout: %d", timeout))
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
 	defer cancel()
@@ -1299,7 +1299,7 @@ func (r *Remote) List(o *ListOptions) (rfs []*plumbing.Reference, err error) {
 
 func (r *Remote) list(ctx context.Context, o *ListOptions) (rfs []*plumbing.Reference, err error) {
 	if r.c == nil || len(r.c.URLs) == 0 {
-		return nil, ErrEmptyUrls
+		return nil, errors.WithStack(ErrEmptyUrls)
 	}
 
 	s, err := newUploadPackSession(r.c.URLs[0], o.Auth, o.InsecureSkipTLS, o.CABundle, o.ProxyOptions)
@@ -1454,13 +1454,13 @@ outer:
 func (r *Remote) checkRequireRemoteRefs(requires []config.RefSpec, remoteRefs storer.ReferenceStorer) error {
 	for _, require := range requires {
 		if require.IsWildcard() {
-			return fmt.Errorf("wildcards not supported in RequireRemoteRefs, got %s", require.String())
+			return errors.WithStack(fmt.Errorf("wildcards not supported in RequireRemoteRefs, got %s", require.String()))
 		}
 
 		name := require.Dst("")
 		remote, err := remoteRefs.Reference(name)
 		if err != nil {
-			return fmt.Errorf("remote ref %s required to be %s but is absent", name.String(), require.Src())
+			return errors.WithStack(fmt.Errorf("remote ref %s required to be %s but is absent", name.String(), require.Src()))
 		}
 
 		var requireHash string
@@ -1469,13 +1469,13 @@ func (r *Remote) checkRequireRemoteRefs(requires []config.RefSpec, remoteRefs st
 		} else {
 			target, err := storer.ResolveReference(remoteRefs, plumbing.ReferenceName(require.Src()))
 			if err != nil {
-				return fmt.Errorf("could not resolve ref %s in RequireRemoteRefs", require.Src())
+				return errors.WithStack(fmt.Errorf("could not resolve ref %s in RequireRemoteRefs", require.Src()))
 			}
 			requireHash = target.Hash().String()
 		}
 
 		if remote.Hash().String() != requireHash {
-			return fmt.Errorf("remote ref %s required to be %s but is %s", name.String(), requireHash, remote.Hash().String())
+			return errors.WithStack(fmt.Errorf("remote ref %s required to be %s but is %s", name.String(), requireHash, remote.Hash().String()))
 		}
 	}
 	return nil

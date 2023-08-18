@@ -1,7 +1,6 @@
 package git
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -14,6 +13,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/protocol/packp/sideband"
 	"github.com/go-git/go-git/v5/plumbing/transport"
+	"github.com/pkg/errors"
 )
 
 // SubmoduleRescursivity defines how depth will affect any submodule recursive
@@ -83,7 +83,7 @@ type CloneOptions struct {
 // Validate validates the fields and sets the default values.
 func (o *CloneOptions) Validate() error {
 	if o.URL == "" {
-		return ErrMissingURL
+		return errors.WithStack(ErrMissingURL)
 	}
 
 	if o.RemoteName == "" {
@@ -157,7 +157,7 @@ const (
 	// AllTags fetch all tags from the remote (i.e., fetch remote tags
 	// refs/tags/* into local tags with the same name)
 	AllTags
-	//NoTags fetch no tags from the remote at all
+	// NoTags fetch no tags from the remote at all
 	NoTags
 )
 
@@ -338,11 +338,11 @@ type CheckoutOptions struct {
 // Validate validates the fields and sets the default values.
 func (o *CheckoutOptions) Validate() error {
 	if !o.Create && !o.Hash.IsZero() && o.Branch != "" {
-		return ErrBranchHashExclusive
+		return errors.WithStack(ErrBranchHashExclusive)
 	}
 
 	if o.Create && o.Branch == "" {
-		return ErrCreateRequiresBranch
+		return errors.WithStack(ErrCreateRequiresBranch)
 	}
 
 	if o.Branch == "" {
@@ -470,7 +470,7 @@ type AddOptions struct {
 // Validate validates the fields and sets the default values.
 func (o *AddOptions) Validate(r *Repository) error {
 	if o.Path != "" && o.Glob != "" {
-		return fmt.Errorf("fields Path and Glob are mutual exclusive")
+		return errors.WithStack(fmt.Errorf("fields Path and Glob are mutual exclusive"))
 	}
 
 	return nil
@@ -506,11 +506,11 @@ type CommitOptions struct {
 // Validate validates the fields and sets the default values.
 func (o *CommitOptions) Validate(r *Repository) error {
 	if o.All && o.Amend {
-		return errors.New("all and amend cannot be used together")
+		return errors.WithStack(errors.New("all and amend cannot be used together"))
 	}
 
 	if o.Amend && len(o.Parents) > 0 {
-		return errors.New("parents cannot be used with amend")
+		return errors.WithStack(errors.New("parents cannot be used with amend"))
 	}
 
 	if o.Author == nil {
@@ -525,7 +525,7 @@ func (o *CommitOptions) Validate(r *Repository) error {
 
 	if len(o.Parents) == 0 {
 		head, err := r.Head()
-		if err != nil && err != plumbing.ErrReferenceNotFound {
+		if err != nil && !errors.Is(err, plumbing.ErrReferenceNotFound) {
 			return err
 		}
 
@@ -568,7 +568,7 @@ func (o *CommitOptions) loadConfigAuthorAndCommitter(r *Repository) error {
 	}
 
 	if o.Author == nil {
-		return ErrMissingAuthor
+		return errors.WithStack(ErrMissingAuthor)
 	}
 
 	return nil
@@ -603,7 +603,7 @@ func (o *CreateTagOptions) Validate(r *Repository, hash plumbing.Hash) error {
 	}
 
 	if o.Message == "" {
-		return ErrMissingMessage
+		return errors.WithStack(ErrMissingMessage)
 	}
 
 	// Canonicalize the message into the expected message format.
@@ -635,7 +635,7 @@ func (o *CreateTagOptions) loadConfigTagger(r *Repository) error {
 	}
 
 	if o.Tagger == nil {
-		return ErrMissingTagger
+		return errors.WithStack(ErrMissingTagger)
 	}
 
 	return nil
@@ -706,7 +706,7 @@ func (o *GrepOptions) Validate(w *Worktree) error {
 
 func (o *GrepOptions) validate(r *Repository) error {
 	if !o.CommitHash.IsZero() && o.ReferenceName != "" {
-		return ErrHashOrReference
+		return errors.WithStack(ErrHashOrReference)
 	}
 
 	// If none of CommitHash and ReferenceName are provided, set commit hash of

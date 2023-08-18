@@ -7,6 +7,7 @@ import (
 	"io"
 
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/pkg/errors"
 
 	. "gopkg.in/check.v1"
 )
@@ -67,7 +68,7 @@ func (s *SuiteWriter) TestNewWriterInvalidType(c *C) {
 	w := NewWriter(buf)
 
 	err := w.WriteHeader(plumbing.InvalidObject, 8)
-	c.Assert(err, Equals, plumbing.ErrInvalidType)
+	c.Assert(errors.Is(err, plumbing.ErrInvalidType), Equals, true)
 }
 
 func (s *SuiteWriter) TestNewWriterInvalidSize(c *C) {
@@ -75,7 +76,7 @@ func (s *SuiteWriter) TestNewWriterInvalidSize(c *C) {
 	w := NewWriter(buf)
 
 	err := w.WriteHeader(plumbing.BlobObject, -1)
-	c.Assert(err, Equals, ErrNegativeSize)
+	c.Assert(errors.Is(err, ErrNegativeSize), Equals, true)
 	err = w.WriteHeader(plumbing.BlobObject, -1651860)
-	c.Assert(err, Equals, ErrNegativeSize)
+	c.Assert(errors.Is(err, ErrNegativeSize), Equals, true)
 }

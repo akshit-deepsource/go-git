@@ -3,12 +3,12 @@ package packp
 import (
 	"bytes"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"io"
 
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/format/pktline"
+	"github.com/pkg/errors"
 )
 
 // Decode reads the next advertised-refs message form its input and
@@ -245,9 +245,9 @@ func readRef(data []byte) (string, plumbing.Hash, error) {
 	chunks := bytes.Split(data, sp)
 	switch {
 	case len(chunks) == 1:
-		return "", plumbing.ZeroHash, fmt.Errorf("malformed ref data: no space was found")
+		return "", plumbing.ZeroHash, errors.WithStack(fmt.Errorf("malformed ref data: no space was found"))
 	case len(chunks) > 2:
-		return "", plumbing.ZeroHash, fmt.Errorf("malformed ref data: more than one space found")
+		return "", plumbing.ZeroHash, errors.WithStack(fmt.Errorf("malformed ref data: more than one space found"))
 	default:
 		return string(chunks[1]), plumbing.NewHash(string(chunks[0])), nil
 	}

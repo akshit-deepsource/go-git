@@ -8,6 +8,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/format/commitgraph"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/storer"
+	"github.com/pkg/errors"
 )
 
 // graphCommitNode is a reduced representation of Commit as presented in the commit
@@ -91,7 +92,7 @@ func (c *graphCommitNode) ParentNodes() CommitNodeIter {
 
 func (c *graphCommitNode) ParentNode(i int) (CommitNode, error) {
 	if i < 0 || i >= len(c.commitData.ParentIndexes) {
-		return nil, object.ErrParentNotFound
+		return nil, errors.WithStack(object.ErrParentNotFound)
 	}
 
 	parent, err := c.gci.commitGraph.GetCommitDataByIndex(c.commitData.ParentIndexes[i])

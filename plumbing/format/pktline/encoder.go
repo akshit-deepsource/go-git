@@ -4,9 +4,10 @@ package pktline
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
+
+	"github.com/pkg/errors"
 )
 
 // An Encoder writes pkt-lines to an output stream.
@@ -62,7 +63,7 @@ func (e *Encoder) Encode(payloads ...[]byte) error {
 
 func (e *Encoder) encodeLine(p []byte) error {
 	if len(p) > MaxPayloadSize {
-		return ErrPayloadTooLong
+		return errors.WithStack(ErrPayloadTooLong)
 	}
 
 	if bytes.Equal(p, Flush) {

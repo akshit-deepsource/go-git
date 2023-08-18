@@ -2,6 +2,7 @@ package commitgraph
 
 import (
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/pkg/errors"
 )
 
 // MemoryIndex provides a way to build the commit-graph in memory
@@ -25,14 +26,14 @@ func (mi *MemoryIndex) GetIndexByHash(h plumbing.Hash) (int, error) {
 		return i, nil
 	}
 
-	return 0, plumbing.ErrObjectNotFound
+	return 0, errors.WithStack(plumbing.ErrObjectNotFound)
 }
 
 // GetCommitDataByIndex gets the commit node from the commit graph using index
 // obtained from child node, if available
 func (mi *MemoryIndex) GetCommitDataByIndex(i int) (*CommitData, error) {
 	if i >= len(mi.commitData) {
-		return nil, plumbing.ErrObjectNotFound
+		return nil, errors.WithStack(plumbing.ErrObjectNotFound)
 	}
 
 	commitData := mi.commitData[i]

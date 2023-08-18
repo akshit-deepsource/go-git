@@ -1,11 +1,11 @@
 package object
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/go-git/go-git/v5/utils/merkletrie"
 	"github.com/go-git/go-git/v5/utils/merkletrie/noder"
+	"github.com/pkg/errors"
 )
 
 // The following functions transform changes types form the merkletrie
@@ -16,11 +16,11 @@ func newChange(c merkletrie.Change) (*Change, error) {
 
 	var err error
 	if ret.From, err = newChangeEntry(c.From); err != nil {
-		return nil, fmt.Errorf("from field: %s", err)
+		return nil, errors.WithStack(fmt.Errorf("from field: %s", err))
 	}
 
 	if ret.To, err = newChangeEntry(c.To); err != nil {
-		return nil, fmt.Errorf("to field: %s", err)
+		return nil, errors.WithStack(fmt.Errorf("to field: %s", err))
 	}
 
 	return ret, nil
@@ -33,7 +33,7 @@ func newChangeEntry(p noder.Path) (ChangeEntry, error) {
 
 	asTreeNoder, ok := p.Last().(*treeNoder)
 	if !ok {
-		return ChangeEntry{}, errors.New("cannot transform non-TreeNoders")
+		return ChangeEntry{}, errors.WithStack(errors.New("cannot transform non-TreeNoders"))
 	}
 
 	return ChangeEntry{
@@ -53,7 +53,7 @@ func newChanges(src merkletrie.Changes) (Changes, error) {
 	for i, e := range src {
 		ret[i], err = newChange(e)
 		if err != nil {
-			return nil, fmt.Errorf("change #%d: %s", i, err)
+			return nil, errors.WithStack(fmt.Errorf("change #%d: %s", i, err))
 		}
 	}
 

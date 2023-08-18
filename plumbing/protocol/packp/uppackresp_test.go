@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/protocol/packp/capability"
+	"github.com/pkg/errors"
 
 	. "gopkg.in/check.v1"
 )
@@ -82,7 +83,7 @@ func (s *UploadPackResponseSuite) TestReadNoDecode(c *C) {
 	defer res.Close()
 
 	n, err := res.Read(nil)
-	c.Assert(err, Equals, ErrUploadPackResponseNotDecoded)
+	c.Assert(errors.Is(err, ErrUploadPackResponseNotDecoded), Equals, true)
 	c.Assert(n, Equals, 0)
 }
 

@@ -1,10 +1,10 @@
 package config
 
 import (
-	"errors"
 	"strings"
 
 	format "github.com/go-git/go-git/v5/plumbing/format/config"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -27,7 +27,7 @@ type URL struct {
 // Validate validates fields of branch
 func (b *URL) Validate() error {
 	if b.InsteadOf == "" {
-		return errURLEmptyInsteadOf
+		return errors.WithStack(errURLEmptyInsteadOf)
 	}
 
 	return nil

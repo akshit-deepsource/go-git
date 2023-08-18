@@ -3,12 +3,12 @@ package packp
 import (
 	"bufio"
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/format/pktline"
+	"github.com/pkg/errors"
 )
 
 const ackLineLen = 44
@@ -56,7 +56,7 @@ func (r *ServerResponse) Decode(reader *bufio.Reader, isMultiACK bool) error {
 	// TODO: Implement support for multi_ack or multi_ack_detailed responses.
 	err := s.Err()
 	if err != nil && isMultiACK {
-		return fmt.Errorf("multi_ack and multi_ack_detailed are not supported: %w", err)
+		return errors.WithStack(fmt.Errorf("multi_ack and multi_ack_detailed are not supported: %w", err))
 	}
 
 	return err
@@ -98,7 +98,7 @@ func (r *ServerResponse) isValidCommand(b []byte) bool {
 
 func (r *ServerResponse) decodeLine(line []byte) error {
 	if len(line) == 0 {
-		return fmt.Errorf("unexpected flush")
+		return errors.WithStack(fmt.Errorf("unexpected flush"))
 	}
 
 	if bytes.Equal(line[0:3], ack) {
@@ -109,12 +109,12 @@ func (r *ServerResponse) decodeLine(line []byte) error {
 		return nil
 	}
 
-	return fmt.Errorf("unexpected content %q", string(line))
+	return errors.WithStack(fmt.Errorf("unexpected content %q", string(line)))
 }
 
 func (r *ServerResponse) decodeACKLine(line []byte) error {
 	if len(line) < ackLineLen {
-		return fmt.Errorf("malformed ACK %q", line)
+		return errors.WithStack(fmt.Errorf("malformed ACK %q", line))
 	}
 
 	sp := bytes.Index(line, []byte(" "))
@@ -127,7 +127,7 @@ func (r *ServerResponse) decodeACKLine(line []byte) error {
 func (r *ServerResponse) Encode(w io.Writer, isMultiACK bool) error {
 	if len(r.ACKs) > 1 && !isMultiACK {
 		// For further information, refer to comments in the Decode func above.
-		return errors.New("multi_ack and multi_ack_detailed are not supported")
+		return errors.WithStack(errors.New("multi_ack and multi_ack_detailed are not supported"))
 	}
 
 	e := pktline.NewEncoder(w)

@@ -3,6 +3,7 @@ package index
 import (
 	"path/filepath"
 
+	"github.com/pkg/errors"
 	. "gopkg.in/check.v1"
 )
 
@@ -31,7 +32,7 @@ func (s *IndexSuite) TestIndexEntry(c *C) {
 
 	e, err = idx.Entry("missing")
 	c.Assert(e, IsNil)
-	c.Assert(err, Equals, ErrEntryNotFound)
+	c.Assert(errors.Is(err, ErrEntryNotFound), Equals, true)
 }
 
 func (s *IndexSuite) TestIndexRemove(c *C) {
@@ -48,7 +49,7 @@ func (s *IndexSuite) TestIndexRemove(c *C) {
 
 	e, err = idx.Remove("foo")
 	c.Assert(e, IsNil)
-	c.Assert(err, Equals, ErrEntryNotFound)
+	c.Assert(errors.Is(err, ErrEntryNotFound), Equals, true)
 }
 
 func (s *IndexSuite) TestIndexGlob(c *C) {

@@ -3,6 +3,7 @@ package gitattributes
 import (
 	"strings"
 
+	"github.com/pkg/errors"
 	. "gopkg.in/check.v1"
 )
 
@@ -54,7 +55,7 @@ func (s *AttributesSuite) TestAttributes_ReadAttributesDisallowMacro(c *C) {
 	}
 
 	_, err := ReadAttributes(strings.NewReader(strings.Join(lines, "\n")), nil, false)
-	c.Assert(err, Equals, ErrMacroNotAllowed)
+	c.Assert(errors.Is(err, ErrMacroNotAllowed), Equals, true)
 }
 
 func (s *AttributesSuite) TestAttributes_ReadAttributesInvalidName(c *C) {
@@ -63,5 +64,5 @@ func (s *AttributesSuite) TestAttributes_ReadAttributesInvalidName(c *C) {
 	}
 
 	_, err := ReadAttributes(strings.NewReader(strings.Join(lines, "\n")), nil, true)
-	c.Assert(err, Equals, ErrInvalidAttributeName)
+	c.Assert(errors.Is(err, ErrInvalidAttributeName), Equals, true)
 }

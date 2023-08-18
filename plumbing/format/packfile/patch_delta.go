@@ -3,13 +3,13 @@ package packfile
 import (
 	"bufio"
 	"bytes"
-	"errors"
 	"io"
 	"math"
 
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/utils/ioutil"
 	"github.com/go-git/go-git/v5/utils/sync"
+	"github.com/pkg/errors"
 )
 
 // See https://github.com/git/git/blob/49fa3dc76179e04b0833542fa52d0f287a4955ac/delta.h
@@ -79,18 +79,18 @@ func ReaderFromDelta(base plumbing.EncodedObject, deltaRC io.Reader) (io.ReadClo
 	srcSz, err := decodeLEB128ByteReader(deltaBuf)
 	if err != nil {
 		if err == io.EOF {
-			return nil, ErrInvalidDelta
+			return nil, errors.WithStack(ErrInvalidDelta)
 		}
 		return nil, err
 	}
 	if srcSz != uint(base.Size()) {
-		return nil, ErrInvalidDelta
+		return nil, errors.WithStack(ErrInvalidDelta)
 	}
 
 	targetSz, err := decodeLEB128ByteReader(deltaBuf)
 	if err != nil {
 		if err == io.EOF {
-			return nil, ErrInvalidDelta
+			return nil, errors.WithStack(ErrInvalidDelta)
 		}
 		return nil, err
 	}
@@ -201,12 +201,12 @@ func ReaderFromDelta(base plumbing.EncodedObject, deltaRC io.Reader) (io.ReadClo
 
 func patchDelta(dst *bytes.Buffer, src, delta []byte) error {
 	if len(delta) < deltaSizeMin {
-		return ErrInvalidDelta
+		return errors.WithStack(ErrInvalidDelta)
 	}
 
 	srcSz, delta := decodeLEB128(delta)
 	if srcSz != uint(len(src)) {
-		return ErrInvalidDelta
+		return errors.WithStack(ErrInvalidDelta)
 	}
 
 	targetSz, delta := decodeLEB128(delta)
@@ -216,7 +216,7 @@ func patchDelta(dst *bytes.Buffer, src, delta []byte) error {
 	dst.Grow(int(targetSz))
 	for {
 		if len(delta) == 0 {
-			return ErrInvalidDelta
+			return errors.WithStack(ErrInvalidDelta)
 		}
 
 		cmd = delta[0]
@@ -243,18 +243,18 @@ func patchDelta(dst *bytes.Buffer, src, delta []byte) error {
 		} else if isCopyFromDelta(cmd) {
 			sz := uint(cmd) // cmd is the size itself
 			if invalidSize(sz, targetSz) {
-				return ErrInvalidDelta
+				return errors.WithStack(ErrInvalidDelta)
 			}
 
 			if uint(len(delta)) < sz {
-				return ErrInvalidDelta
+				return errors.WithStack(ErrInvalidDelta)
 			}
 
 			dst.Write(delta[0:sz])
 			remainingTargetSz -= sz
 			delta = delta[sz:]
 		} else {
-			return ErrDeltaCmd
+			return errors.WithStack(ErrDeltaCmd)
 		}
 
 		if remainingTargetSz <= 0 {
@@ -357,28 +357,28 @@ func decodeOffset(cmd byte, delta []byte) (uint, []byte, error) {
 	var offset uint
 	if (cmd & 0x01) != 0 {
 		if len(delta) == 0 {
-			return 0, nil, ErrInvalidDelta
+			return 0, nil, errors.WithStack(ErrInvalidDelta)
 		}
 		offset = uint(delta[0])
 		delta = delta[1:]
 	}
 	if (cmd & 0x02) != 0 {
 		if len(delta) == 0 {
-			return 0, nil, ErrInvalidDelta
+			return 0, nil, errors.WithStack(ErrInvalidDelta)
 		}
 		offset |= uint(delta[0]) << 8
 		delta = delta[1:]
 	}
 	if (cmd & 0x04) != 0 {
 		if len(delta) == 0 {
-			return 0, nil, ErrInvalidDelta
+			return 0, nil, errors.WithStack(ErrInvalidDelta)
 		}
 		offset |= uint(delta[0]) << 16
 		delta = delta[1:]
 	}
 	if (cmd & 0x08) != 0 {
 		if len(delta) == 0 {
-			return 0, nil, ErrInvalidDelta
+			return 0, nil, errors.WithStack(ErrInvalidDelta)
 		}
 		offset |= uint(delta[0]) << 24
 		delta = delta[1:]
@@ -421,21 +421,21 @@ func decodeSize(cmd byte, delta []byte) (uint, []byte, error) {
 	var sz uint
 	if (cmd & 0x10) != 0 {
 		if len(delta) == 0 {
-			return 0, nil, ErrInvalidDelta
+			return 0, nil, errors.WithStack(ErrInvalidDelta)
 		}
 		sz = uint(delta[0])
 		delta = delta[1:]
 	}
 	if (cmd & 0x20) != 0 {
 		if len(delta) == 0 {
-			return 0, nil, ErrInvalidDelta
+			return 0, nil, errors.WithStack(ErrInvalidDelta)
 		}
 		sz |= uint(delta[0]) << 8
 		delta = delta[1:]
 	}
 	if (cmd & 0x40) != 0 {
 		if len(delta) == 0 {
-			return 0, nil, ErrInvalidDelta
+			return 0, nil, errors.WithStack(ErrInvalidDelta)
 		}
 		sz |= uint(delta[0]) << 16
 		delta = delta[1:]

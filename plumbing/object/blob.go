@@ -6,6 +6,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/storer"
 	"github.com/go-git/go-git/v5/utils/ioutil"
+	"github.com/pkg/errors"
 )
 
 // Blob is used to store arbitrary data - it is generally a file.
@@ -56,7 +57,7 @@ func (b *Blob) Type() plumbing.ObjectType {
 // Decode transforms a plumbing.EncodedObject into a Blob struct.
 func (b *Blob) Decode(o plumbing.EncodedObject) error {
 	if o.Type() != plumbing.BlobObject {
-		return ErrUnsupportedObject
+		return errors.WithStack(ErrUnsupportedObject)
 	}
 
 	b.Hash = o.Hash()

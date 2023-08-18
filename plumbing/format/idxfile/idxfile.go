@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/hash"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -115,13 +116,13 @@ func (idx *MemoryIndex) Contains(h plumbing.Hash) (bool, error) {
 // FindOffset implements the Index interface.
 func (idx *MemoryIndex) FindOffset(h plumbing.Hash) (int64, error) {
 	if len(idx.FanoutMapping) <= int(h[0]) {
-		return 0, plumbing.ErrObjectNotFound
+		return 0, errors.WithStack(plumbing.ErrObjectNotFound)
 	}
 
 	k := idx.FanoutMapping[h[0]]
 	i, ok := idx.findHashIndex(h)
 	if !ok {
-		return 0, plumbing.ErrObjectNotFound
+		return 0, errors.WithStack(plumbing.ErrObjectNotFound)
 	}
 
 	offset := idx.getOffset(k, i)
@@ -157,7 +158,7 @@ func (idx *MemoryIndex) FindCRC32(h plumbing.Hash) (uint32, error) {
 	k := idx.FanoutMapping[h[0]]
 	i, ok := idx.findHashIndex(h)
 	if !ok {
-		return 0, plumbing.ErrObjectNotFound
+		return 0, errors.WithStack(plumbing.ErrObjectNotFound)
 	}
 
 	return idx.getCRC32(k, i), nil
@@ -189,7 +190,7 @@ func (idx *MemoryIndex) FindHash(o int64) (plumbing.Hash, error) {
 	}
 
 	if !ok {
-		return plumbing.ZeroHash, plumbing.ErrObjectNotFound
+		return plumbing.ZeroHash, errors.WithStack(plumbing.ErrObjectNotFound)
 	}
 
 	return hash, nil

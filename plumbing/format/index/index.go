@@ -2,7 +2,6 @@ package index
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/filemode"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -76,7 +76,7 @@ func (i *Index) Entry(path string) (*Entry, error) {
 		}
 	}
 
-	return nil, ErrEntryNotFound
+	return nil, errors.WithStack(ErrEntryNotFound)
 }
 
 // Remove remove the entry that match the give path and returns deleted entry.
@@ -89,7 +89,7 @@ func (i *Index) Remove(path string) (*Entry, error) {
 		}
 	}
 
-	return nil, ErrEntryNotFound
+	return nil, errors.WithStack(ErrEntryNotFound)
 }
 
 // Glob returns the all entries matching pattern or nil if there is no matching
@@ -203,8 +203,8 @@ type ResolveUndoEntry struct {
 // can take advantage of this to quickly locate the index extensions without
 // having to parse through all of the index entries.
 //
-//  Because it must be able to be loaded before the variable length cache
-//  entries and other index extensions, this extension must be written last.
+//	Because it must be able to be loaded before the variable length cache
+//	entries and other index extensions, this extension must be written last.
 type EndOfIndexEntry struct {
 	// Offset to the end of the index entries
 	Offset uint32

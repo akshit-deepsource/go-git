@@ -1,17 +1,21 @@
 package plumbing
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/pkg/errors"
+)
 
 type PermanentError struct {
 	Err error
 }
 
-func NewPermanentError(err error) *PermanentError {
+func NewPermanentError(err error) error {
 	if err == nil {
 		return nil
 	}
 
-	return &PermanentError{Err: err}
+	return errors.WithStack(&PermanentError{Err: err})
 }
 
 func (e *PermanentError) Error() string {
@@ -22,12 +26,12 @@ type UnexpectedError struct {
 	Err error
 }
 
-func NewUnexpectedError(err error) *UnexpectedError {
+func NewUnexpectedError(err error) error {
 	if err == nil {
 		return nil
 	}
 
-	return &UnexpectedError{Err: err}
+	return errors.WithStack(&UnexpectedError{Err: err})
 }
 
 func (e *UnexpectedError) Error() string {

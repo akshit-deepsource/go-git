@@ -14,6 +14,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/protocol/packp/capability"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/storage/memory"
+	"github.com/pkg/errors"
 
 	. "gopkg.in/check.v1"
 )
@@ -42,7 +43,7 @@ func (s *UploadPackSuite) TestAdvertisedReferencesNotExists(c *C) {
 	defer func() { c.Assert(r.Close(), IsNil) }()
 
 	ar, err := r.AdvertisedReferences()
-	c.Assert(err, Equals, transport.ErrRepositoryNotFound)
+	c.Assert(errors.Is(err, transport.ErrRepositoryNotFound), Equals, true)
 	c.Assert(ar, IsNil)
 
 	r, err = s.Client.NewUploadPackSession(s.NonExistentEndpoint, s.EmptyAuth)
@@ -50,7 +51,7 @@ func (s *UploadPackSuite) TestAdvertisedReferencesNotExists(c *C) {
 	req := packp.NewUploadPackRequest()
 	req.Wants = append(req.Wants, plumbing.NewHash("6ecf0ef2c2dffb796033e5a02219af86ec6584e5"))
 	reader, err := r.UploadPack(context.Background(), req)
-	c.Assert(err, Equals, transport.ErrRepositoryNotFound)
+	c.Assert(errors.Is(err, transport.ErrRepositoryNotFound), Equals, true)
 	c.Assert(reader, IsNil)
 }
 
@@ -248,7 +249,7 @@ func (s *UploadPackSuite) TestFetchError(c *C) {
 	c.Assert(err, NotNil)
 	c.Assert(reader, IsNil)
 
-	//XXX: We do not test Close error, since implementations might return
+	// XXX: We do not test Close error, since implementations might return
 	//     different errors if a previous error was found.
 }
 

@@ -3,12 +3,12 @@ package commitgraph
 import (
 	"bytes"
 	encbin "encoding/binary"
-	"errors"
 	"io"
 	"time"
 
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/utils/binary"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -70,7 +70,7 @@ func (fi *fileIndex) verifyFileHeader() error {
 		return err
 	}
 	if !bytes.Equal(signature, commitFileSignature) {
-		return ErrMalformedCommitGraphFile
+		return errors.WithStack(ErrMalformedCommitGraphFile)
 	}
 
 	// Read and verify the file header
@@ -79,10 +79,10 @@ func (fi *fileIndex) verifyFileHeader() error {
 		return err
 	}
 	if header[0] != 1 {
-		return ErrUnsupportedVersion
+		return errors.WithStack(ErrUnsupportedVersion)
 	}
 	if header[1] != 1 {
-		return ErrUnsupportedHash
+		return errors.WithStack(ErrUnsupportedHash)
 	}
 
 	return nil
@@ -114,7 +114,7 @@ func (fi *fileIndex) readChunkHeaders() error {
 	}
 
 	if fi.oidFanoutOffset <= 0 || fi.oidLookupOffset <= 0 || fi.commitDataOffset <= 0 {
-		return ErrMalformedCommitGraphFile
+		return errors.WithStack(ErrMalformedCommitGraphFile)
 	}
 
 	return nil
@@ -128,7 +128,7 @@ func (fi *fileIndex) readFanout() error {
 			return err
 		}
 		if fanoutValue > 0x7fffffff {
-			return ErrMalformedCommitGraphFile
+			return errors.WithStack(ErrMalformedCommitGraphFile)
 		}
 		fi.fanout[i] = int(fanoutValue)
 	}
@@ -162,12 +162,12 @@ func (fi *fileIndex) GetIndexByHash(h plumbing.Hash) (int, error) {
 		}
 	}
 
-	return 0, plumbing.ErrObjectNotFound
+	return 0, errors.WithStack(plumbing.ErrObjectNotFound)
 }
 
 func (fi *fileIndex) GetCommitDataByIndex(idx int) (*CommitData, error) {
 	if idx >= fi.fanout[0xff] {
-		return nil, plumbing.ErrObjectNotFound
+		return nil, errors.WithStack(plumbing.ErrObjectNotFound)
 	}
 
 	offset := fi.commitDataOffset + int64(idx)*36
@@ -234,7 +234,7 @@ func (fi *fileIndex) getHashesFromIndexes(indexes []int) ([]plumbing.Hash, error
 
 	for i, idx := range indexes {
 		if idx >= fi.fanout[0xff] {
-			return nil, ErrMalformedCommitGraphFile
+			return nil, errors.WithStack(ErrMalformedCommitGraphFile)
 		}
 
 		offset := fi.oidLookupOffset + int64(idx)*20

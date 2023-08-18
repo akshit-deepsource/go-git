@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-git/v5/utils/ioutil"
+	"github.com/pkg/errors"
 )
 
 func (d *DotGit) openAndLockPackedRefsMode() int {
@@ -29,7 +30,7 @@ func (d *DotGit) rewritePackedRefsWhileLocked(
 
 	// If we are in a filesystem that does not support rename (e.g. sivafs)
 	// a full copy is done.
-	if err == billy.ErrNotSupported {
+	if errors.Is(err, billy.ErrNotSupported) {
 		return d.copyNewFile(tmp, pr)
 	}
 

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+
+	"github.com/pkg/errors"
 )
 
 // A FileMode represents the kind of tree entries used by git. It
@@ -75,10 +77,10 @@ func New(s string) (FileMode, error) {
 func NewFromOSFileMode(m os.FileMode) (FileMode, error) {
 	if m.IsRegular() {
 		if isSetTemporary(m) {
-			return Empty, fmt.Errorf("no equivalent git mode for %s", m)
+			return Empty, errors.WithStack(fmt.Errorf("no equivalent git mode for %s", m))
 		}
 		if isSetCharDevice(m) {
-			return Empty, fmt.Errorf("no equivalent git mode for %s", m)
+			return Empty, errors.WithStack(fmt.Errorf("no equivalent git mode for %s", m))
 		}
 		if isSetUserExecutable(m) {
 			return Executable, nil
@@ -94,7 +96,7 @@ func NewFromOSFileMode(m os.FileMode) (FileMode, error) {
 		return Symlink, nil
 	}
 
-	return Empty, fmt.Errorf("no equivalent git mode for %s", m)
+	return Empty, errors.WithStack(fmt.Errorf("no equivalent git mode for %s", m))
 }
 
 func isSetCharDevice(m os.FileMode) bool {
@@ -184,5 +186,5 @@ func (m FileMode) ToOSFileMode() (os.FileMode, error) {
 		return os.ModePerm | os.ModeSymlink, nil
 	}
 
-	return os.FileMode(0), fmt.Errorf("malformed mode (%s)", m)
+	return os.FileMode(0), errors.WithStack(fmt.Errorf("malformed mode (%s)", m))
 }

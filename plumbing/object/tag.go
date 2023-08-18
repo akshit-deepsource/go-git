@@ -11,6 +11,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/storer"
 	"github.com/go-git/go-git/v5/utils/ioutil"
 	"github.com/go-git/go-git/v5/utils/sync"
+	"github.com/pkg/errors"
 )
 
 // Tag represents an annotated tag object. It points to a single git object of
@@ -80,7 +81,7 @@ func (t *Tag) Type() plumbing.ObjectType {
 // Decode transforms a plumbing.EncodedObject into a Tag struct.
 func (t *Tag) Decode(o plumbing.EncodedObject) (err error) {
 	if o.Type() != plumbing.TagObject {
-		return ErrUnsupportedObject
+		return errors.WithStack(ErrUnsupportedObject)
 	}
 
 	t.Hash = o.Hash()
@@ -193,7 +194,7 @@ func (t *Tag) encode(o plumbing.EncodedObject, includeSig bool) (err error) {
 // different type of object ErrUnsupportedObject will be returned.
 func (t *Tag) Commit() (*Commit, error) {
 	if t.TargetType != plumbing.CommitObject {
-		return nil, ErrUnsupportedObject
+		return nil, errors.WithStack(ErrUnsupportedObject)
 	}
 
 	o, err := t.s.EncodedObject(plumbing.CommitObject, t.Target)
@@ -219,7 +220,7 @@ func (t *Tag) Tree() (*Tree, error) {
 	case plumbing.TreeObject:
 		return GetTree(t.s, t.Target)
 	default:
-		return nil, ErrUnsupportedObject
+		return nil, errors.WithStack(ErrUnsupportedObject)
 	}
 }
 
@@ -227,7 +228,7 @@ func (t *Tag) Tree() (*Tree, error) {
 // different type of object ErrUnsupportedObject will be returned.
 func (t *Tag) Blob() (*Blob, error) {
 	if t.TargetType != plumbing.BlobObject {
-		return nil, ErrUnsupportedObject
+		return nil, errors.WithStack(ErrUnsupportedObject)
 	}
 
 	return GetBlob(t.s, t.Target)

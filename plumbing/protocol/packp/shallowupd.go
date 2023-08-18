@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/format/pktline"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -66,7 +67,7 @@ func (r *ShallowUpdate) decodeUnshallowLine(line []byte) error {
 
 func (r *ShallowUpdate) decodeLine(line, prefix []byte, expLen int) (plumbing.Hash, error) {
 	if len(line) != expLen {
-		return plumbing.ZeroHash, fmt.Errorf("malformed %s%q", prefix, line)
+		return plumbing.ZeroHash, errors.WithStack(fmt.Errorf("malformed %s%q", prefix, line))
 	}
 
 	raw := string(line[expLen-40 : expLen])

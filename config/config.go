@@ -3,7 +3,6 @@ package config
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -14,6 +13,7 @@ import (
 	"github.com/go-git/go-billy/v5/osfs"
 	"github.com/go-git/go-git/v5/internal/url"
 	format "github.com/go-git/go-git/v5/plumbing/format/config"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -161,7 +161,7 @@ func ReadConfig(r io.Reader) (*Config, error) {
 // config file to the given scope, a empty one is returned.
 func LoadConfig(scope Scope) (*Config, error) {
 	if scope == LocalScope {
-		return nil, fmt.Errorf("LocalScope should be read from the a ConfigStorer")
+		return nil, errors.WithStack(fmt.Errorf("LocalScope should be read from the a ConfigStorer"))
 	}
 
 	files, err := Paths(scope)
@@ -216,7 +216,7 @@ func Paths(scope Scope) ([]string, error) {
 func (c *Config) Validate() error {
 	for name, r := range c.Remotes {
 		if r.Name != name {
-			return ErrInvalid
+			return errors.WithStack(ErrInvalid)
 		}
 
 		if err := r.Validate(); err != nil {
@@ -226,7 +226,7 @@ func (c *Config) Validate() error {
 
 	for name, b := range c.Branches {
 		if b.Name != name {
-			return ErrInvalid
+			return errors.WithStack(ErrInvalid)
 		}
 
 		if err := b.Validate(); err != nil {
@@ -377,7 +377,7 @@ func unmarshalSubmodules(fc *format.Config, submodules map[string]*Submodule) {
 		m := &Submodule{}
 		m.unmarshal(sub)
 
-		if m.Validate() == ErrModuleBadPath {
+		if errors.Is(m.Validate(), ErrModuleBadPath) {
 			continue
 		}
 
@@ -597,11 +597,11 @@ type RemoteConfig struct {
 // Validate validates the fields and sets the default values.
 func (c *RemoteConfig) Validate() error {
 	if c.Name == "" {
-		return ErrRemoteConfigEmptyName
+		return errors.WithStack(ErrRemoteConfigEmptyName)
 	}
 
 	if len(c.URLs) == 0 {
-		return ErrRemoteConfigEmptyURL
+		return errors.WithStack(ErrRemoteConfigEmptyURL)
 	}
 
 	for _, r := range c.Fetch {

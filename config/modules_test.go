@@ -1,6 +1,9 @@
 package config
 
-import . "gopkg.in/check.v1"
+import (
+	"github.com/pkg/errors"
+	. "gopkg.in/check.v1"
+)
 
 type ModulesSuite struct{}
 
@@ -8,7 +11,7 @@ var _ = Suite(&ModulesSuite{})
 
 func (s *ModulesSuite) TestValidateMissingURL(c *C) {
 	m := &Submodule{Path: "foo"}
-	c.Assert(m.Validate(), Equals, ErrModuleEmptyURL)
+	c.Assert(errors.Is(m.Validate(), ErrModuleEmptyURL), Equals, true)
 }
 
 func (s *ModulesSuite) TestValidateBadPath(c *C) {
@@ -30,13 +33,13 @@ func (s *ModulesSuite) TestValidateBadPath(c *C) {
 			Path: p,
 			URL:  "https://example.com/",
 		}
-		c.Assert(m.Validate(), Equals, ErrModuleBadPath)
+		c.Assert(errors.Is(m.Validate(), ErrModuleBadPath), Equals, true)
 	}
 }
 
 func (s *ModulesSuite) TestValidateMissingName(c *C) {
 	m := &Submodule{URL: "bar"}
-	c.Assert(m.Validate(), Equals, ErrModuleEmptyPath)
+	c.Assert(errors.Is(m.Validate(), ErrModuleEmptyPath), Equals, true)
 }
 
 func (s *ModulesSuite) TestMarshal(c *C) {

@@ -3,7 +3,6 @@ package object
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -13,6 +12,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	fdiff "github.com/go-git/go-git/v5/plumbing/format/diff"
 	"github.com/go-git/go-git/v5/utils/diff"
+	"github.com/pkg/errors"
 
 	dmp "github.com/sergi/go-diff/diffmatchpatch"
 )
@@ -31,7 +31,7 @@ func getPatchContext(ctx context.Context, message string, changes ...*Change) (*
 	for _, c := range changes {
 		select {
 		case <-ctx.Done():
-			return nil, ErrCanceled
+			return nil, errors.WithStack(ErrCanceled)
 		default:
 		}
 
@@ -71,7 +71,7 @@ func filePatchWithContext(ctx context.Context, c *Change) (fdiff.FilePatch, erro
 	for _, d := range diffs {
 		select {
 		case <-ctx.Done():
-			return nil, ErrCanceled
+			return nil, errors.WithStack(ErrCanceled)
 		default:
 		}
 
@@ -283,8 +283,8 @@ func printStat(fileStats []FileStat) string {
 	for _, fs := range fileStats {
 		addn := float64(fs.Addition)
 		deln := float64(fs.Deletion)
-		addc := int(math.Floor(addn/scaleFactor))
-		delc := int(math.Floor(deln/scaleFactor))
+		addc := int(math.Floor(addn / scaleFactor))
+		delc := int(math.Floor(deln / scaleFactor))
 		if addc < 0 {
 			addc = 0
 		}

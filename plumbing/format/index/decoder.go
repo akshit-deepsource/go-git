@@ -3,7 +3,6 @@ package index
 import (
 	"bufio"
 	"bytes"
-	"errors"
 	"io"
 
 	"strconv"
@@ -12,6 +11,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/hash"
 	"github.com/go-git/go-git/v5/utils/binary"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -155,7 +155,7 @@ func (d *Decoder) readEntryName(idx *Index, e *Entry, flags uint16) error {
 	case 4:
 		name, err = d.doReadEntryNameV4()
 	default:
-		return ErrUnsupportedVersion
+		return errors.WithStack(ErrUnsupportedVersion)
 	}
 
 	if err != nil {
@@ -231,7 +231,7 @@ func (d *Decoder) readExtensions(idx *Index) error {
 		}
 	}
 
-	if err != errUnknownExtension {
+	if !errors.Is(err, errUnknownExtension) {
 		return err
 	}
 
@@ -274,7 +274,7 @@ func (d *Decoder) readExtension(idx *Index, header []byte) error {
 			return err
 		}
 	default:
-		return errUnknownExtension
+		return errors.WithStack(errUnknownExtension)
 	}
 
 	return nil
@@ -299,7 +299,7 @@ func (d *Decoder) readChecksum(expected []byte, alreadyRead [4]byte) error {
 	}
 
 	if !bytes.Equal(h[:], expected) {
-		return ErrInvalidChecksum
+		return errors.WithStack(ErrInvalidChecksum)
 	}
 
 	return nil
@@ -312,7 +312,7 @@ func validateHeader(r io.Reader) (version uint32, err error) {
 	}
 
 	if !bytes.Equal(s, indexSignature) {
-		return 0, ErrMalformedSignature
+		return 0, errors.WithStack(ErrMalformedSignature)
 	}
 
 	version, err = binary.ReadUint32(r)
@@ -321,7 +321,7 @@ func validateHeader(r io.Reader) (version uint32, err error) {
 	}
 
 	if version < DecodeVersionSupported.Min || version > DecodeVersionSupported.Max {
-		return 0, ErrUnsupportedVersion
+		return 0, errors.WithStack(ErrUnsupportedVersion)
 	}
 
 	return

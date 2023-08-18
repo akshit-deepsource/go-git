@@ -7,6 +7,7 @@ import (
 	fixtures "github.com/go-git/go-git-fixtures/v4"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/hash"
+	"github.com/pkg/errors"
 
 	. "gopkg.in/check.v1"
 )
@@ -133,7 +134,7 @@ func (s *ScannerSuite) TestSeekObjectHeaderNonSeekable(c *C) {
 	p := NewScanner(r)
 
 	_, err := p.SeekObjectHeader(expectedHeadersOFS[4].Offset)
-	c.Assert(err, Equals, ErrSeekNotSupported)
+	c.Assert(errors.Is(err, ErrSeekNotSupported), Equals, true)
 }
 
 func (s *ScannerSuite) TestReaderReset(c *C) {
@@ -183,7 +184,7 @@ func (s *ScannerSuite) TestReaderResetSeeks(c *C) {
 	c.Assert(p.IsSeekable, Equals, false)
 
 	_, err = p.SeekObjectHeader(expectedHeadersOFS[4].Offset)
-	c.Assert(err, Equals, ErrSeekNotSupported)
+	c.Assert(errors.Is(err, ErrSeekNotSupported), Equals, true)
 }
 
 var expectedHeadersOFS = []ObjectHeader{

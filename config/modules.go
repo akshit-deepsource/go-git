@@ -2,10 +2,10 @@ package config
 
 import (
 	"bytes"
-	"errors"
 	"regexp"
 
 	format "github.com/go-git/go-git/v5/plumbing/format/config"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -95,15 +95,15 @@ type Submodule struct {
 // Validate validates the fields and sets the default values.
 func (m *Submodule) Validate() error {
 	if m.Path == "" {
-		return ErrModuleEmptyPath
+		return errors.WithStack(ErrModuleEmptyPath)
 	}
 
 	if m.URL == "" {
-		return ErrModuleEmptyURL
+		return errors.WithStack(ErrModuleEmptyURL)
 	}
 
 	if dotdotPath.MatchString(m.Path) {
-		return ErrModuleBadPath
+		return errors.WithStack(ErrModuleBadPath)
 	}
 
 	return nil

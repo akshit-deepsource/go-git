@@ -2,7 +2,6 @@ package git
 
 import (
 	"bytes"
-	"errors"
 	"path"
 	"sort"
 	"strings"
@@ -12,6 +11,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/format/index"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/storage"
+	"github.com/pkg/errors"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/go-git/go-billy/v5"
@@ -171,7 +171,7 @@ type buildTreeHelper struct {
 // of the root tree is returned.
 func (h *buildTreeHelper) BuildTree(idx *index.Index, opts *CommitOptions) (plumbing.Hash, error) {
 	if len(idx.Entries) == 0 && (opts == nil || !opts.AllowEmptyCommits) {
-		return plumbing.ZeroHash, ErrEmptyCommit
+		return plumbing.ZeroHash, errors.WithStack(ErrEmptyCommit)
 	}
 
 	const rootNode = ""

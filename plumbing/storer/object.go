@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	//ErrStop is used to stop a ForEach function in an Iter
+	// ErrStop is used to stop a ForEach function in an Iter
 	ErrStop = errors.New("stop iter")
 )
 
@@ -278,7 +278,7 @@ func ForEachIterator(iter bareIterator, cb func(plumbing.EncodedObject) error) e
 		}
 
 		if err := cb(obj); err != nil {
-			if err == ErrStop {
+			if errors.Is(err, ErrStop) {
 				return nil
 			}
 

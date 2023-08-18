@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/format/pktline"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -29,7 +30,7 @@ func NewReportStatus() *ReportStatus {
 // Error returns the first error if any.
 func (s *ReportStatus) Error() error {
 	if s.UnpackStatus != ok {
-		return fmt.Errorf("unpack error: %s", s.UnpackStatus)
+		return errors.WithStack(fmt.Errorf("unpack error: %s", s.UnpackStatus))
 	}
 
 	for _, s := range s.CommandStatuses {
@@ -83,7 +84,7 @@ func (s *ReportStatus) Decode(r io.Reader) error {
 	}
 
 	if !flushed {
-		return fmt.Errorf("missing flush")
+		return errors.WithStack(fmt.Errorf("missing flush"))
 	}
 
 	return scan.Err()
@@ -103,7 +104,7 @@ func (s *ReportStatus) scanFirstLine(scan *pktline.Scanner) error {
 
 func (s *ReportStatus) decodeReportStatus(b []byte) error {
 	if isFlush(b) {
-		return fmt.Errorf("premature flush")
+		return errors.WithStack(fmt.Errorf("premature flush"))
 	}
 
 	b = bytes.TrimSuffix(b, eol)
@@ -111,7 +112,7 @@ func (s *ReportStatus) decodeReportStatus(b []byte) error {
 	line := string(b)
 	fields := strings.SplitN(line, " ", 2)
 	if len(fields) != 2 || fields[0] != "unpack" {
-		return fmt.Errorf("malformed unpack status: %s", line)
+		return errors.WithStack(fmt.Errorf("malformed unpack status: %s", line))
 	}
 
 	s.UnpackStatus = fields[1]
@@ -127,7 +128,7 @@ func (s *ReportStatus) decodeCommandStatus(b []byte) error {
 	if len(fields) == 3 && fields[0] == "ng" {
 		status = fields[2]
 	} else if len(fields) != 2 || fields[0] != "ok" {
-		return fmt.Errorf("malformed command status: %s", line)
+		return errors.WithStack(fmt.Errorf("malformed command status: %s", line))
 	}
 
 	cs := &CommandStatus{
@@ -151,8 +152,8 @@ func (s *CommandStatus) Error() error {
 		return nil
 	}
 
-	return fmt.Errorf("command error on %s: %s",
-		s.ReferenceName.String(), s.Status)
+	return errors.WithStack(fmt.Errorf("command error on %s: %s",
+		s.ReferenceName.String(), s.Status))
 }
 
 func (s *CommandStatus) encode(w io.Writer) error {

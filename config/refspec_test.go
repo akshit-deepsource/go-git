@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/go-git/go-git/v5/plumbing"
@@ -18,7 +19,7 @@ func (s *RefSpecSuite) TestRefSpecIsValid(c *C) {
 	c.Assert(spec.Validate(), Equals, nil)
 
 	spec = RefSpec("refs/heads/*:refs/remotes/origin/")
-	c.Assert(spec.Validate(), Equals, ErrRefSpecMalformedWildcard)
+	c.Assert(errors.Is(spec.Validate(), ErrRefSpecMalformedWildcard), Equals, true)
 
 	spec = RefSpec("refs/heads/master:refs/remotes/origin/master")
 	c.Assert(spec.Validate(), Equals, nil)
@@ -27,22 +28,22 @@ func (s *RefSpecSuite) TestRefSpecIsValid(c *C) {
 	c.Assert(spec.Validate(), Equals, nil)
 
 	spec = RefSpec(":refs/heads/*")
-	c.Assert(spec.Validate(), Equals, ErrRefSpecMalformedWildcard)
+	c.Assert(errors.Is(spec.Validate(), ErrRefSpecMalformedWildcard), Equals, true)
 
 	spec = RefSpec(":*")
-	c.Assert(spec.Validate(), Equals, ErrRefSpecMalformedWildcard)
+	c.Assert(errors.Is(spec.Validate(), ErrRefSpecMalformedWildcard), Equals, true)
 
 	spec = RefSpec("refs/heads/*")
-	c.Assert(spec.Validate(), Equals, ErrRefSpecMalformedSeparator)
+	c.Assert(errors.Is(spec.Validate(), ErrRefSpecMalformedSeparator), Equals, true)
 
 	spec = RefSpec("refs/heads:")
-	c.Assert(spec.Validate(), Equals, ErrRefSpecMalformedSeparator)
+	c.Assert(errors.Is(spec.Validate(), ErrRefSpecMalformedSeparator), Equals, true)
 
 	spec = RefSpec("12039e008f9a4e3394f3f94f8ea897785cb09448:refs/heads/foo")
 	c.Assert(spec.Validate(), Equals, nil)
 
 	spec = RefSpec("12039e008f9a4e3394f3f94f8ea897785cb09448:refs/heads/*")
-	c.Assert(spec.Validate(), Equals, ErrRefSpecMalformedWildcard)
+	c.Assert(errors.Is(spec.Validate(), ErrRefSpecMalformedWildcard), Equals, true)
 }
 
 func (s *RefSpecSuite) TestRefSpecIsForceUpdate(c *C) {
